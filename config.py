@@ -1,4 +1,5 @@
 import torch
+import os
 
 
 all_classes_modelnet40 = ["airplane", "bench", "bowl", "cone", "desk", "flower_pot", "keyboard", "mantel", "person", "radio",
@@ -10,13 +11,39 @@ all_classes_modelnet40 = ["airplane", "bench", "bowl", "cone", "desk", "flower_p
 
 def get_config():
     return {
-        "batch_size":8,
-        "train_classes": all_classes_modelnet40,
-        "backend_network": "baseline",
-        "learning_rate": 3e-4,
-        "optimizer":"adam",
+        "train_params":{
+            "batch_size":8,
+            "train_classes": all_classes_modelnet40, # all_classes or specify indivudal as ["desk", "sofa", "plant"]
+            "learning_rate": 3e-4,
+            "optimizer":"adam",
+        },
+        "network_details":{
+            "backend_network": "baseline",
+            "rotation_representation": "SVD" #SVD or 6D, 
+        },
+        "camera_intrinsics":{
+            "focal_length": 50, #mm
+            "sensor_width": 36, #mm
+            "image_resolution": 300, # width=height
+        },
+        "scene_positioning":{
+            "distance_cam_to_world": 1.5,
+            "distance_cam_to_world_deviation":0.1,
+            "world_to_object_gt_transl_deviation": 0.1,
+            "world_to_object_transl_deviation": 0.1,
+            "world_to_object_angle_deviation":25,
+        },
+
+
     }
 
 
 if __name__ == '__main__':
     config = get_config()
+    for param_dict_key in config:
+        param_dict = config[param_dict_key]
+        print("")
+        print(param_dict_key.upper())
+        for key in param_dict:
+            value = param_dict[key]
+            print(key, value)
