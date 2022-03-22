@@ -8,7 +8,6 @@ all_classes_modelnet40 = ["airplane", "bench", "bowl", "cone", "desk", "flower_p
                           "dresser", "guitar", "laptop", "night_stand", "plant", "sink", "stool", "toilet", "wardrobe"]
 
 
-
 def get_config():
     return {
         "train_params":{
@@ -34,7 +33,11 @@ def get_config():
             "world_to_object_transl_deviation": 0.1,
             "world_to_object_angle_deviation":25,
         },
-
+        "model_io":{
+            "use_pretrained_model": False,
+            "pretrained_model_path": os.path.join("saved_models", "sdffds"),
+            "model_save_path": os.path.join("saved_models", "baseline_state_dict.pth",
+        },
 
     }
 
