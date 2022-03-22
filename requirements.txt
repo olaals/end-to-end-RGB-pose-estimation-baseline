@@ -1,9 +1,7 @@
-
-
 numpy
 spatialmath-python
 pyrender
 efficientnet_pytorch
-
+albumentations
 
 

@@ -3,7 +3,7 @@ import os
 
 
 all_classes_modelnet40 = ["airplane", "bench", "bowl", "cone", "desk", "flower_pot", "keyboard", "mantel", "person", "radio",
-                          "sofa", "table", "tv_stand", "xbox", "bathtub", "bookshelf", "car", "cup", "door", "glass_box"
+                          "sofa", "table", "tv_stand", "xbox", "bathtub", "bookshelf", "car", "cup", "door", "glass_box",
                           "lamp", "monitor", "piano", "range_hood", "stairs", "tent", "vase", "bed", "bottle", "chair", "curtain",
                           "dresser", "guitar", "laptop", "night_stand", "plant", "sink", "stool", "toilet", "wardrobe"]
 
@@ -16,10 +16,11 @@ def get_config():
             "train_classes": all_classes_modelnet40, # all_classes or specify indivudal as ["desk", "sofa", "plant"]
             "learning_rate": 3e-4,
             "optimizer":"adam",
+            "num_sample_vertices": 1000,
         },
         "network_details":{
             "backend_network": "baseline",
-            "rotation_representation": "SVD" #SVD or 6D, 
+            "rotation_representation": "SVD", #SVD or 6D, 
         },
         "camera_intrinsics":{
             "focal_length": 50, #mm
