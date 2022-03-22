@@ -15,9 +15,7 @@ Snippets of code are copied from the CosyPose github. Copied functions contains 
 
 # 1: Install dependencies
 1. Install torch
-2. ```bash
-pip install -r requirements.txt
-```
+2. ```bash pip install -r requirements.txt```
 
 
 
