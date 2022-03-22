@@ -13,7 +13,15 @@ https://github.com/ylabbe/cosypose
 
 Snippets of code are copied from the CosyPose github. Copied functions contains an explicit comment about the source.
 
-# How to run the baseline
+# 1: Install dependencies
+1. Install torch
+2. ```bash
+pip install -r requirements.txt
+```
+
+
+
+# 2: Run the baseline
 1. Download ModelNet40 from https://modelnet.cs.princeton.edu/
 2. Change the dataset path in **normalize_modelnet40.py** and run the file
 3. You should now have a directory named "ModelNet40-norm-ply" in project root directory
