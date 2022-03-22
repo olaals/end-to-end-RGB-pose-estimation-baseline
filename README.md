@@ -2,7 +2,16 @@
 A baseline for render-and-compare machine learning pose estimation using a known CAD model, without the use of depth measurements.
 
 The work is inspired by the DeepIM paper and CosyPose paper, but this repository contains a simplified version.
-Check them out here:
+\\
+The simplifications includes:
+- No handling of symmetries
+- Simpler renderer compared to CosyPose
+- No disentangled loss (see CosyPose)
+- No auxiliary training path (DeepIM)
+- Baseline network is simple
+
+\\
+Links to DeepIM and CosyPose:
 
 **DeepIM**:
 https://arxiv.org/abs/1804.00175
@@ -14,8 +23,8 @@ https://github.com/ylabbe/cosypose
 Snippets of code are copied from the CosyPose github. Copied functions contains an explicit comment about the source.
 
 # 1: Install dependencies
-1. Install torch
-2. ```bash pip install -r requirements.txt```
+1. Install torch and cuda from https://pytorch.org/get-started/locally/
+2. ```pip install -r requirements.txt```
 
 
 
