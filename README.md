@@ -34,6 +34,15 @@ Snippets of code are copied from the CosyPose github. Copied functions contains 
 3. You should now have a directory named "ModelNet40-norm-ply" in project root directory
 
 
+# 3: Suggestions for things to test
+- Compare baseline network with EfficientNet (used in CosyPose)
+- Compare 6D representation of rotation with 9D represenat(SVD)  
+- Test multiple feed forward heads on the baseline networks, for individually predicting rotation, horisontal and vertical translation, and depth
+- Test different activation functions on these heads
+- Change the classes in ModelNet40 the network is trained on, and see if it generalizes well to unseen classes (i.e. remove the "chair" class from training, and test it on the "chair" class after training on other objects)
+
+
+
 
 **License**:
 I included an MIT license, but feel free to copy any code without citing this repository. If you copy any code which stems from another repository in this repository, read their specific license and cite accordingly.
