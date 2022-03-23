@@ -61,7 +61,14 @@ def render_scene(object_path, T_CO, cam_config):
     add_light(scene, T_CO)
     add_camera(scene, T_CO, K)
     img, depth = render(scene, img_size)
-    return img
+    return img, normalize_depth(depth)
+
+def normalize_depth(depth_img):
+    mean_val = np.mean(depth_img[depth_img>0.01])
+    std = np.std(depth_img[depth_img>0.01])
+    normalized = np.where(depth_img>0.01, (depth_img-mean_val)/std, 0.0)
+    return normalized.astype(np.float32)
+
 
 if __name__ == '__main__':
     """

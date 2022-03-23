@@ -49,7 +49,12 @@ def get_config():
             "model_load_dir": os.path.join("models", "saved-models"),
             "model_load_name": "baseline-"+rotation_rep+".pth",
             "test_classes": ["airplane"],
-        }
+        },
+        "advanced":{
+            "use_normalized_depth": True,
+            "use_iterative_training": False,
+        },
+
 
     }
 

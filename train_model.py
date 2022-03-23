@@ -10,8 +10,7 @@ import os
 
 
 
-def init_training():
-    config = get_config()
+def train(config):
     scene_config = config["scene_config"]
 
     ds_name = config["train_params"]["dataset_name"]
@@ -25,6 +24,7 @@ def init_training():
     model_save_dir = config["model_io"]["model_save_dir"]
     pretrained_name = config["model_io"]["pretrained_model_name"]
     pretrained_path = os.path.join(model_save_dir, pretrained_name)
+    use_norm_depth = config["advanced"]["use_normalized_depth"]
     # model saving
     save_every_n_batch = config["model_io"]["batch_model_save_interval"]
     model_save_name = config["model_io"]["model_save_name"]
@@ -32,7 +32,7 @@ def init_training():
 
     cam_intrinsics = config["camera_intrinsics"]
     
-    model = fetch_network(model_name, rotation_repr, use_pretrained, )
+    model = fetch_network(model_name, rotation_repr, use_norm_depth, use_pretrained, pretrained_path)
     model = model.to(device)
 
     #train params
@@ -61,7 +61,10 @@ def init_training():
     else:
         print("No pretrained model used, training from scratch")
     print("The model will be saved to", model_save_path)
+    if use_norm_depth:
+        print("The model is trained with the normalized depth from the CAD model (advanced)")
     print("")
+
 
 
     """
@@ -72,9 +75,10 @@ def init_training():
 
         T_CO_init, T_CO_gt = sample_T_CO_inits_and_gts(batch_size, scene_config)
         mesh_paths = sample_mesh_paths(batch_size, ds_name, train_classes, "train")
-        init_imgs = render_batch(T_CO_init, mesh_paths, cam_intrinsics)
-        gt_imgs = render_batch(T_CO_gt, mesh_paths, cam_intrinsics)
-        model_input = prepare_model_input(init_imgs, gt_imgs).to(device)
+        init_imgs, norm_depth = render_batch(T_CO_init, mesh_paths, cam_intrinsics)
+        if not use_norm_depth: norm_depth = None
+        gt_imgs,_ = render_batch(T_CO_gt, mesh_paths, cam_intrinsics)
+        model_input = prepare_model_input(init_imgs, gt_imgs, norm_depth).to(device)
         cam_mats = get_camera_mat_tensor(cam_intrinsics, batch_size).to(device)
         mesh_verts = sample_verts_to_batch(mesh_paths, num_sample_verts).to(device) 
         
@@ -97,7 +101,8 @@ def init_training():
 
 
 if __name__ == '__main__':
-    init_training()
+    config = get_config()
+    train(config)
 
 
 

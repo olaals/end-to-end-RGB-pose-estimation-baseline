@@ -70,13 +70,16 @@ def render_batch(T_COs, mesh_paths, cam_config):
     bsz = len(mesh_paths)
     assert T_COs.shape == (bsz,4,4)
     imgs = []
+    norm_depths = []
     for i in range(bsz):
         mesh_path = mesh_paths[i]
         T_CO = T_COs[i]
-        img = render_scene(mesh_path, T_CO, cam_config)
+        img, norm_depth = render_scene(mesh_path, T_CO, cam_config)
         imgs.append(img.astype(np.float32))
+        norm_depths.append(norm_depth.astype(np.float32))
     imgs = np.array(imgs, dtype=np.float32)
-    return imgs
+    norm_depths = np.array(norm_depths)
+    return imgs, norm_depths
 
 def sample_verts_to_batch(mesh_paths, num_verts_to_sample):
     verts_batch = []
@@ -86,12 +89,20 @@ def sample_verts_to_batch(mesh_paths, num_verts_to_sample):
     verts_batch = torch.stack(verts_batch)
     return verts_batch
 
-def prepare_model_input(init_imgs, gt_imgs):
+def prepare_model_input(init_imgs, gt_imgs, norm_depths=None):
     model_input_batch = []
-    for init_img, gt_img in zip(init_imgs, gt_imgs):
+    for i in range(len(init_imgs)):
+        init_img = init_imgs[i]
+        gt_img = gt_imgs[i]
         gt_tensor = transforms(image=gt_img.astype(np.float32))["image"]
         init_tensor = transforms(image=init_img.astype(np.float32))["image"]
-        model_input = torch.cat([init_tensor, gt_tensor])
+        if norm_depths is None:
+            model_input = torch.cat([init_tensor, gt_tensor])
+        else:
+            norm_depth = norm_depths[i]
+            norm_depth = np.expand_dims(norm_depth, 0)
+            norm_depth = torch.tensor(norm_depth)
+            model_input = torch.cat([norm_depth, init_tensor, gt_tensor])
         model_input_batch.append(model_input)
     model_input_batch = torch.stack(model_input_batch)
     return model_input_batch
