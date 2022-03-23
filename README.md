@@ -28,14 +28,18 @@ Snippets of code are copied from the CosyPose github. Copied functions contains 
 2. ```pip install -r requirements.txt```
 
 
-
 # 2: Run the baseline
 1. Download ModelNet40 from https://modelnet.cs.princeton.edu/
 2. Change the dataset path in **normalize_modelnet40.py** and run the file
 3. You should now have a directory named "ModelNet40-norm-ply" in project root directory
+4. Train the baseline model by running **train_model.py**
+5. Visualize some results from training the model by running **test_visualization.py**
 
+# 3. Change training parameters, network etc.
+- All configurations are in **config.py**
+- If you wish to include another network, place it in models, and implement loading it in **models/fetch_network.py**
 
-# 3: Suggestions for things to test
+# 4: Suggestions for things to test
 - Compare baseline network with EfficientNet (used in CosyPose)
 - Compare baseline network with another network of your choice
 - Use another version of EfficientNet (current is EfficientNet-b3) for another image size, see if a larger or smaller image size affects the accuracy and robustness of the method. Check out the EfficientNet paper and Pytorch implementation of EfficieNet for the suggested image sizes.
