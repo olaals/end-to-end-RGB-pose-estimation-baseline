@@ -49,10 +49,10 @@ def render(scene, img_size):
     return color/255.0, depth
 
 
-def render_scene(object_path, T_CO, config):
+def render_scene(object_path, T_CO, cam_config):
     assert T_CO.shape == (4,4)
-    img_size = get_config()["camera_intrinsics"]["image_resolution"]
-    K = get_camera_matrix(config["camera_intrinsics"])
+    img_size = cam_config["image_resolution"]
+    K = get_camera_matrix(cam_config)
 
     T_CO = sm.SE3.Rx(180, unit='deg').data[0]@T_CO # convert from OpenCV camera frame to OpenGL camera frame
     scene = pyrender.Scene()

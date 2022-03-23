@@ -13,11 +13,14 @@ def get_config():
         "train_params":{
             "batch_size":8,
             "train_classes": all_classes_modelnet40, # all_classes or specify indivudal as ["desk", "sofa", "plant"]
-            "learning_rate": 3e-4,
+            "learning_rate": 3e-4, 
+            "num_batches_to_train": 2000, # stop training after N batches
             "optimizer":"adam",
-            "num_sample_vertices": 1000,
+            "num_sample_vertices": 1000,  # number of vertices sampled from the mesh, used in calculating the loss
+            "device": "cuda", # cuda or cpu 
+            "dataset_name": "ModelNet40-norm-ply",
         },
-        "network_details":{
+        "network":{
             "backend_network": "baseline",
             "rotation_representation": "SVD", #SVD or 6D, 
         },
@@ -26,18 +29,25 @@ def get_config():
             "sensor_width": 36, #mm
             "image_resolution": 300, # width=height
         },
-        "scene_positioning":{
-            "distance_cam_to_world": 1.5,
-            "distance_cam_to_world_deviation":0.1,
-            "world_to_object_gt_transl_deviation": 0.1,
-            "world_to_object_transl_deviation": 0.1,
-            "world_to_object_angle_deviation":25,
+        "scene_config":{
+            "distance_cam_to_world": 1.5, #meters
+            "distance_cam_to_world_deviation":0.1, #meters
+            "world_to_object_gt_transl_deviation": 0.1, #meters
+            "world_to_object_transl_deviation": 0.1, #meters
+            "world_to_object_angle_deviation":25, #degrees
         },
         "model_io":{
-            "use_pretrained_model": False,
-            "pretrained_model_path": os.path.join("saved_models", "sdffds"),
-            "model_save_path": os.path.join("saved_models", "baseline_state_dict.pth",
+            "use_pretrained_model": False,  # start training from a pretrained model
+            "pretrained_model_path": os.path.join("saved_models", "sdffds"), # path to predtrained model, if use_pretrained_model = True
+            "model_save_dir": os.path.join("models", "saved-models"),
+            "model_save_name": "baseline_state_dict.pth",
+            "batch_model_save_interval": 10,  # save model during tranining after every N batch trained
         },
+        "test_config":{
+            "model_load_dir": os.path.join("models", "saved_models"),
+            "model_load_name": "baseline_state_dict.pth",
+            "test_classes": all_classes_modelnet40,
+        }
 
     }
 
@@ -50,4 +60,4 @@ if __name__ == '__main__':
         print(param_dict_key.upper())
         for key in param_dict:
             value = param_dict[key]
-            print(key, value)
+            print(key, ":", value)

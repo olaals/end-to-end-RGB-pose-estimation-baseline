@@ -1,4 +1,4 @@
-
+import torch
 
 def compute_rotation_matrix_from_ortho6d(poses):
     """
@@ -37,19 +37,36 @@ def symmetric_orthogonalization(x):
   r = torch.matmul(u, vt)
   return r
 
-def calculate_T_CO_pred(model_output, T_CO_init):
+def calculate_T_CO_pred(model_output, T_CO_init, rot_repr, Ks):
+    bsz = model_output.shape[0]
+    if rot_repr == 'SVD':
+        assert model_output.shape == (bsz, 12)
+    elif rot_repr == '6D':
+        assert model_output.shape == (bsz, 9)
+
+    assert T_CO_init.shape == (bsz, 4,4)
+    assert Ks.shape == (bsz, 3,3)
+    
+
     device = model_output.device
     bsz = T_CO_init.shape[0]
     T_CO_pred = torch.ones((bsz, 4, 4)).to(device)
-    dR = symmetric_orthogonalization(model_output[:, 0:9])
-    vxvyvz = model_output[:, 9:12]
+    if rot_repr == 'SVD':
+        dR = symmetric_orthogonalization(model_output[:, 0:9])
+        vxvyvz = model_output[:, 9:12]
+    elif rot_repr == '6D':
+        dR = compute_rotation_matrix_from_ortho6d(model_output[:, 0:6])
+        vxvyvz = model_output[:, 6:9]
+    else:
+        assert False
     vx = vxvyvz[:, 0]
     vy = vxvyvz[:, 1]
     vz = vxvyvz[:, 2]
-    vz = 1+nn.Tanh()(vz)*0.2
-    K = get_K(device)
+    #vz = 1+nn.Tanh()(vz)*0.2
 
     R_k = T_CO_init[:, :3, :3]
+
+    K = Ks[0]
 
     fx = K[0,0]
     fy = K[1,1]
@@ -62,7 +79,7 @@ def calculate_T_CO_pred(model_output, T_CO_init):
     R_k = R_k.float()
     R_kp1 = torch.einsum('bij,bjk->bik', dR, R_k)
 
-    # assemble
+    ## assemble
     T_CO_pred[:, :3, :3] = R_kp1
     T_CO_pred[:, 0, 3] = x_kp1
     T_CO_pred[:, 1, 3] = y_kp1

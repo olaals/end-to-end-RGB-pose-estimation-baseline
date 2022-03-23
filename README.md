@@ -9,6 +9,7 @@ The simplifications includes:
 - No disentangled loss (see CosyPose)
 - No auxiliary training path (DeepIM)
 - Baseline network is simple
+- No cropped camera matrix
 
 \\
 Links to DeepIM and CosyPose:
@@ -36,10 +37,13 @@ Snippets of code are copied from the CosyPose github. Copied functions contains 
 
 # 3: Suggestions for things to test
 - Compare baseline network with EfficientNet (used in CosyPose)
-- Compare 6D representation of rotation with 9D represenat(SVD)  
+- Compare baseline network with another network of your choice
+- Use another version of EfficientNet (current is EfficientNet-b3) for another image size, see if a larger or smaller image size affects the accuracy and robustness of the method. Check out the EfficientNet paper and Pytorch implementation of EfficieNet for the suggested image sizes.
+- Compare 6D representation of rotation with 9D representation(SVD)  
 - Test multiple feed forward heads on the baseline networks, for individually predicting rotation, horisontal and vertical translation, and depth
 - Test different activation functions on these heads
 - Change the classes in ModelNet40 the network is trained on, and see if it generalizes well to unseen classes (i.e. remove the "chair" class from training, and test it on the "chair" class after training on other objects)
+- Try implementing the disentangled loss from CosyPose and compare with the baseline loss function
 
 
 

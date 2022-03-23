@@ -1,19 +1,4 @@
 
-
-def get_ADD_loss(model_output, T_CO_init, T_CO_gt, verts):
-    bsz = T_CO_gt.shape[0]
-    assert model_output.shape == (bsz, 12)
-    assert T_CO_init.shape == (bsz, 4,4)
-    assert T_CO_gt.shape == (bsz, 4,4)
-
-    T_CO_pred = calculate_T_CO_pred(model_output, T_CO_init)
-
-    loss = compute_ADD_L1_loss(T_CO_gt.float(), T_CO_pred, verts.float())
-    loss = loss.mean()
-
-    return loss
-
-
 def compute_ADD_L1_loss(TCO_gt, TCO_pred, points):
     """
     copied from
@@ -24,7 +9,7 @@ def compute_ADD_L1_loss(TCO_gt, TCO_pred, points):
     assert TCO_pred.shape == (bsz, 4, 4) and TCO_gt.shape == (bsz, 4, 4)
     assert points.dim() == 3 and points.shape[-1] == 3
     dists = (transform_pts(TCO_gt, points) - transform_pts(TCO_pred, points)).abs().mean(dim=(-1, -2))
-    return dists
+    return dists.mean()
 
 
 

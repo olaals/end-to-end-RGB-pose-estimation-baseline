@@ -70,12 +70,12 @@ def get_T_CW(base_distance, random_deviation=0.0):
     T_CW = T_WC.inv()
     return T_CW
 
-def get_T_CO_init_and_gt(config):
-    dist_CW = config["scene_positioning"]["distance_cam_to_world"]
-    dist_CW_dev = config["scene_positioning"]["distance_cam_to_world_deviation"]
-    WO_gt_transl_dev = config["scene_positioning"]["world_to_object_gt_transl_deviation"]
-    WO_transl_dev = config["scene_positioning"]["world_to_object_transl_deviation"]
-    WO_angle_dev = config["scene_positioning"]["world_to_object_angle_deviation"]
+def get_T_CO_init_and_gt(scene_config):
+    dist_CW = scene_config["distance_cam_to_world"]
+    dist_CW_dev = scene_config["distance_cam_to_world_deviation"]
+    WO_gt_transl_dev = scene_config["world_to_object_gt_transl_deviation"]
+    WO_transl_dev = scene_config["world_to_object_transl_deviation"]
+    WO_angle_dev = scene_config["world_to_object_angle_deviation"]
      
     T_WO_gt = get_random_rotation_translation(WO_gt_transl_dev)
     T_WO_init_guess = apply_small_random_rotation_translation(T_WO_gt, WO_angle_dev, WO_transl_dev)
