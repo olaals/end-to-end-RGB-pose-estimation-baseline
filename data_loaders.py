@@ -36,35 +36,67 @@ def get_dataset_class_paths(dataset_name, classname, test_or_train):
     return model_paths
 
 
-def get_all_training_paths(ds_name, classes):
+def get_all_train_or_test_paths(ds_name, classes, train_or_test):
     all_training_paths = []
     for classname in classes:
-        class_train_paths = get_dataset_class_paths(ds_name, classname, "train")
+        class_train_paths = get_dataset_class_paths(ds_name, classname, train_or_test)
         all_training_paths = all_training_paths + class_train_paths
     return all_training_paths
 
-def sample_random_training_path(ds_name,classes):
-    all_train_paths = get_all_training_paths(ds_name,classes)
+def sample_random_path(ds_name,classes, train_or_test):
+    all_train_paths = get_all_train_or_test_paths(ds_name,classes, train_or_test)
     random_path = random.choice(all_train_paths)
     return random_path
 
+def sample_mesh_paths(batch_size, ds_name, classes, train_or_test):
+    mesh_paths = []
+    for _ in range(batch_size):
+        mesh_paths.append(sample_random_path(ds_name, classes, train_or_test))
+    return mesh_paths
 
-def prepare_data(T_CO_init, T_CO_gt, init_img, gt_img):
-    gt_tensor = transforms(image=gt_img.astype(np.float32))["image"]
-    init_tensor = transforms(image=init_img.astype(np.float32))["image"]
-    T_CO_gt_tensor = torch.from_numpy(T_CO_gt.data[0].astype(np.float32))
-    T_CO_init_tensor = torch.from_numpy(T_CO_init.data[0].astype(np.float32))
-    model_input = torch.cat([init_tensor, gt_tensor])
-    return model_input, T_CO_init_tensor, T_CO_gt_tensor
+def sample_T_CO_inits_and_gts(batch_size, scene_config):
+    T_CO_inits = []
+    T_CO_gts = []
+    for _ in range(batch_size):
+        T_CO_init, T_CO_gt = get_T_CO_init_and_gt(scene_config)
+        T_CO_inits.append(T_CO_init.data[0].astype(np.float32))
+        T_CO_gts.append(T_CO_gt.data[0].astype(np.float32))
+    T_CO_inits = np.array(T_CO_inits, dtype=np.float32)
+    T_CO_gts = np.array(T_CO_gts, dtype=np.float32)
+    return T_CO_inits, T_CO_gts
 
-def get_training_example(ds_name, train_classes, num_sample_verts, scene_config, cam_config):
-    T_CO_init, T_CO_gt = get_T_CO_init_and_gt(scene_config)
-    mesh_path = sample_random_training_path(ds_name, train_classes)
-    init_img = render_scene(mesh_path, T_CO_init.data[0], cam_config)
-    gt_img = render_scene(mesh_path, T_CO_gt.data[0], cam_config)
-    model_input, T_CO_init_tensor, T_CO_gt_tensor = prepare_data(T_CO_init, T_CO_gt, init_img, gt_img)
-    mesh_vertices = sample_vertices_as_tensor(mesh_path, num_sample_verts)
-    return model_input, T_CO_init_tensor, T_CO_gt_tensor, mesh_vertices
+
+def render_batch(T_COs, mesh_paths, cam_config):
+    bsz = len(mesh_paths)
+    assert T_COs.shape == (bsz,4,4)
+    imgs = []
+    for i in range(bsz):
+        mesh_path = mesh_paths[i]
+        T_CO = T_COs[i]
+        img = render_scene(mesh_path, T_CO, cam_config)
+        imgs.append(img.astype(np.float32))
+    imgs = np.array(imgs, dtype=np.float32)
+    return imgs
+
+def sample_verts_to_batch(mesh_paths, num_verts_to_sample):
+    verts_batch = []
+    for mesh_path in mesh_paths:
+        verts = sample_vertices_as_tensor(mesh_path, num_verts_to_sample)
+        verts_batch.append(verts)
+    verts_batch = torch.stack(verts_batch)
+    return verts_batch
+
+def prepare_model_input(init_imgs, gt_imgs):
+    model_input_batch = []
+    for init_img, gt_img in zip(init_imgs, gt_imgs):
+        gt_tensor = transforms(image=gt_img.astype(np.float32))["image"]
+        init_tensor = transforms(image=init_img.astype(np.float32))["image"]
+        model_input = torch.cat([init_tensor, gt_tensor])
+        model_input_batch.append(model_input)
+    model_input_batch = torch.stack(model_input_batch)
+    return model_input_batch
+
+        
 
 def get_camera_mat_tensor(cam_intrinsics, batch_size):
     sensor_width = cam_intrinsics["sensor_width"]
@@ -80,24 +112,6 @@ def get_camera_mat_tensor(cam_intrinsics, batch_size):
 
 
 
-def get_train_batch(ds_name, batch_size, train_classes, num_sample_verts, cam_intrinsics, scene_config, device):
-
-    model_input_batch = []
-    T_CO_init_batch = []
-    T_CO_gt_batch = []
-    mesh_vert_batch = []
-    for _ in range(batch_size):
-        model_input, T_CO_init, T_CO_gt, mesh_verts = get_training_example(ds_name, train_classes, num_sample_verts, scene_config, cam_intrinsics)
-        model_input_batch.append(model_input)
-        T_CO_init_batch.append(T_CO_init)
-        T_CO_gt_batch.append(T_CO_gt)
-        mesh_vert_batch.append(mesh_verts)
-    model_input_batch = torch.stack(model_input_batch).to(device)
-    T_CO_init_batch = torch.stack(T_CO_init_batch).to(device)
-    T_CO_gt_batch = torch.stack(T_CO_gt_batch).to(device)
-    mesh_vert_batch = torch.stack(mesh_vert_batch).to(device)
-    cam_mats = get_camera_mat_tensor(cam_intrinsics, batch_size).to(device)
-    return model_input_batch, T_CO_init_batch, T_CO_gt_batch, mesh_vert_batch, cam_mats
 
 
 if __name__ == '__main__':

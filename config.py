@@ -9,12 +9,14 @@ all_classes_modelnet40 = ["airplane", "bench", "bowl", "cone", "desk", "flower_p
 
 
 def get_config():
+    rotation_rep = "SVD" #SVD or 6D,
+
     return {
         "train_params":{
             "batch_size":8,
-            "train_classes": all_classes_modelnet40, # all_classes or specify indivudal as ["desk", "sofa", "plant"]
+            "train_classes": ["airplane"], # all_classes or specify indivudal as ["desk", "sofa", "plant"]
             "learning_rate": 3e-4, 
-            "num_batches_to_train": 2000, # stop training after N batches
+            "num_batches_to_train": 3000, # stop training after N batches
             "optimizer":"adam",
             "num_sample_vertices": 1000,  # number of vertices sampled from the mesh, used in calculating the loss
             "device": "cuda", # cuda or cpu 
@@ -22,7 +24,7 @@ def get_config():
         },
         "network":{
             "backend_network": "baseline",
-            "rotation_representation": "SVD", #SVD or 6D, 
+            "rotation_representation": rotation_rep, #SVD or 6D, 
         },
         "camera_intrinsics":{
             "focal_length": 50, #mm
@@ -30,7 +32,7 @@ def get_config():
             "image_resolution": 300, # width=height
         },
         "scene_config":{
-            "distance_cam_to_world": 1.5, #meters
+            "distance_cam_to_world": 1.8, #meters
             "distance_cam_to_world_deviation":0.1, #meters
             "world_to_object_gt_transl_deviation": 0.1, #meters
             "world_to_object_transl_deviation": 0.1, #meters
@@ -38,13 +40,13 @@ def get_config():
         },
         "model_io":{
             "use_pretrained_model": False,  # start training from a pretrained model
-            "pretrained_model_path": os.path.join("saved_models", "sdffds"), # path to predtrained model, if use_pretrained_model = True
+            "pretrained_model_name": "baseline-"+rotation_rep+".pth", # load predtrained model, if use_pretrained_model = True
             "model_save_dir": os.path.join("models", "saved-models"),
-            "model_save_name": "baseline_state_dict.pth",
+            "model_save_name": "baseline-"+rotation_rep+".pth",
             "batch_model_save_interval": 10,  # save model during tranining after every N batch trained
         },
         "test_config":{
-            "model_load_dir": os.path.join("models", "saved_models"),
+            "model_load_dir": os.path.join("models", "saved-models"),
             "model_load_name": "baseline_state_dict.pth",
             "test_classes": all_classes_modelnet40,
         }

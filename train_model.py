@@ -1,7 +1,7 @@
 from config import get_config
 from models.baseline_net import BaseNet
 import torch
-from data_loaders import get_train_batch
+from data_loaders import *
 from loss import compute_ADD_L1_loss
 from rotation_representation import calculate_T_CO_pred
 #from models.efficient_net import 
@@ -25,16 +25,18 @@ def init_training():
     rotation_repr = config["network"]["rotation_representation"]
     device = config["train_params"]["device"]
     use_pretrained = config["model_io"]["use_pretrained_model"]
+    model_save_dir = config["model_io"]["model_save_dir"]
+    pretrained_name = config["model_io"]["pretrained_model_name"]
+    pretrained_path = os.path.join(model_save_dir, pretrained_name)
     # model saving
     save_every_n_batch = config["model_io"]["batch_model_save_interval"]
-    model_save_dir = config["model_io"]["model_save_dir"]
     model_save_name = config["model_io"]["model_save_name"]
     model_save_path = os.path.join(model_save_dir, model_save_name)
 
     cam_intrinsics = config["camera_intrinsics"]
     print("Loading backend network", model_name.upper(), "with rotation representation", rotation_repr)
     
-    model = fetch_network(model_name, rotation_repr)
+    model = fetch_network(model_name, rotation_repr, use_pretrained, )
     model = model.to(device)
 
     #train params
@@ -59,9 +61,17 @@ def init_training():
     """
     for i in range(num_train_batches):
         optimizer.zero_grad()
-        model_input, T_CO_init, T_CO_gt, mesh_verts, cam_mats = get_train_batch(
-                ds_name, batch_size, train_classes, num_sample_verts, cam_intrinsics, scene_config, device)
 
+        T_CO_init, T_CO_gt = sample_T_CO_inits_and_gts(batch_size, scene_config)
+        mesh_paths = sample_mesh_paths(batch_size, ds_name, train_classes, "train")
+        init_imgs = render_batch(T_CO_init, mesh_paths, cam_intrinsics)
+        gt_imgs = render_batch(T_CO_gt, mesh_paths, cam_intrinsics)
+        model_input = prepare_model_input(init_imgs, gt_imgs).to(device)
+        cam_mats = get_camera_mat_tensor(cam_intrinsics, batch_size).to(device)
+        mesh_verts = sample_verts_to_batch(mesh_paths, num_sample_verts).to(device) 
+        
+        T_CO_init = torch.tensor(T_CO_init).to(device)
+        T_CO_gt = torch.tensor(T_CO_gt).to(device)
         model_output = model(model_input)
         T_CO_pred = calculate_T_CO_pred(model_output, T_CO_init, rotation_repr, cam_mats)
         loss = compute_ADD_L1_loss(T_CO_gt, T_CO_pred, mesh_verts)

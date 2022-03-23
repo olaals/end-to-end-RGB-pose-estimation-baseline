@@ -1,4 +1,5 @@
 from .baseline_net import BaseNet
+import torch
 
 def fetch_network(model_name, rot_repr, use_pretrained=False, pretrained_path=""):
     if(rot_repr == 'SVD'):
@@ -9,7 +10,10 @@ def fetch_network(model_name, rot_repr, use_pretrained=False, pretrained_path=""
         assert(False, "Unknown value for rotation representation in config.py")
 
     if model_name == 'baseline':
-        return BaseNet(6,out_features)
+        model = BaseNet(6,out_features)
+        if use_pretrained:
+            model.load_state_dict(torch.load(pretrained_path))
+        return model
     elif model_name == 'efficient_net':
         pass
     else:
