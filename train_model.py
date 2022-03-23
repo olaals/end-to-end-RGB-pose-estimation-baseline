@@ -10,9 +10,6 @@ import os
 
 
 
-
-
-
 def init_training():
     config = get_config()
     scene_config = config["scene_config"]
@@ -34,7 +31,6 @@ def init_training():
     model_save_path = os.path.join(model_save_dir, model_save_name)
 
     cam_intrinsics = config["camera_intrinsics"]
-    print("Loading backend network", model_name.upper(), "with rotation representation", rotation_repr)
     
     model = fetch_network(model_name, rotation_repr, use_pretrained, )
     model = model.to(device)
@@ -54,6 +50,18 @@ def init_training():
     else:
         assert False
 
+    # print training info
+    print("")
+    print(" ### TRAINING IS STARTING ### ")
+    print("Loading backend network", model_name.upper(), "with rotation representation", rotation_repr)
+    print("Batch size", batch_size, "Learning rate", learning_rate, "Optimizer", opt_name.upper())
+    print("Training on device", device)
+    if use_pretrained:
+        print("Pretrained model is loaded from", predtrained_path)
+    else:
+        print("No pretrained model used, training from scratch")
+    print("The model will be saved to", model_save_path)
+    print("")
 
 
     """

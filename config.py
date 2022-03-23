@@ -9,7 +9,7 @@ all_classes_modelnet40 = ["airplane", "bench", "bowl", "cone", "desk", "flower_p
 
 
 def get_config():
-    rotation_rep = "SVD" #SVD or 6D,
+    rotation_rep = "6D" #SVD or 6D,
 
     return {
         "train_params":{
@@ -47,8 +47,8 @@ def get_config():
         },
         "test_config":{
             "model_load_dir": os.path.join("models", "saved-models"),
-            "model_load_name": "baseline_state_dict.pth",
-            "test_classes": all_classes_modelnet40,
+            "model_load_name": "baseline-"+rotation_rep+".pth",
+            "test_classes": ["airplane"],
         }
 
     }
