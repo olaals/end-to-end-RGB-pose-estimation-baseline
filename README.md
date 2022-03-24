@@ -42,14 +42,16 @@ The repo contains two options for rotation representations:
 python train_model.py baseline_cfg
 ```
 where baseline_cfg is the python config file in the configs directory
+\
 5. Visualize some results from training the model by running 
 ```bash
 python test_visualization.py baseline_cfg
 ```
 
 # 3. Change training parameters, network etc.
-- All configurations are in **config.py**
-- If you wish to include another network, place it in models, and implement loading it in **models/fetch_network.py**
+- All configurations are in the configs file in the config directory
+- Change the parameters in those configuration files, or make new ones. New configuration files will save a new state dict of the network in models/saved-models
+- If you wish to include another network, place it in models, and implement loading it in **models/fetch_network.py**, then create a new config file for it.
 
 # 4: Suggestions for things to test
 - Compare baseline network with EfficientNet (used in CosyPose)
