@@ -42,7 +42,7 @@ The repo contains two options for rotation representations:
 ```bash
 python train_model.py baseline_cfg
 ```
-where baseline_cfg is the python config file in the configs directory
+where **baseline_cfg** is the python config file named **baseline_cfg.py** in the configs directory
 \
 5. Visualize some results from training the model by running 
 ```bash
@@ -66,6 +66,11 @@ python test_visualization.py baseline_cfg
 
 
 # Technical details
+## Frames
+The code in the repository uses shorthand notation for the transformation 
+matrix describing the rotation and translation between frames. The image
+below shows the shorthand notations used, where T_CO is of particular importance.
+
 ![Alt text](irrelevant-data/scene-frames.png "Scene frames")
 
 
