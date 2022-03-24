@@ -1,6 +1,5 @@
 import spatialmath as sm
 import numpy as np
-from config import get_config
 
 
 def look_at_SE3(origin, target, up):

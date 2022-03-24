@@ -9,9 +9,16 @@ all_classes_modelnet40 = ["airplane", "bench", "bowl", "cone", "desk", "flower_p
 
 
 def get_config():
+
+    this_file_name = os.path.split(os.path.splitext(__file__)[0])[-1]
+    print("THIS FILE NAME")
+    print(this_file_name)
+
     rotation_rep = "SVD" #SVD or 6D,
-    #backend_network = "baseline"
     backend_network = "effnet_b3"
+
+
+
 
     return {
         "train_params":{
@@ -42,14 +49,14 @@ def get_config():
         },
         "model_io":{
             "use_pretrained_model": False,  # start training from a pretrained model
-            "pretrained_model_name": backend_network+"-"+rotation_rep+".pth", # load predtrained model, if use_pretrained_model = True
+            "pretrained_model_name": "SPECIFY_PREDTRAINED_PATH_HERE.pth", # load predtrained model, if use_pretrained_model = True
             "model_save_dir": os.path.join("models", "saved-models"),
-            "model_save_name": backend_network+"-"+rotation_rep+".pth",
+            "model_save_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
             "batch_model_save_interval": 10,  # save model during tranining after every N batch trained
         },
         "test_config":{
             "model_load_dir": os.path.join("models", "saved-models"),
-            "model_load_name": backend_network+"-"+rotation_rep+".pth",
+            "model_load_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
             "test_classes": ["airplane"],
         },
         "advanced":{

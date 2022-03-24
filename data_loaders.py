@@ -8,7 +8,6 @@ from albumentations.pytorch.transforms import ToTensorV2
 import matplotlib.pyplot as plt
 from se3_helpers import get_T_CO_init_and_gt
 from renderer import render_scene
-from config import get_config
 
 transforms = A.Compose([
     ToTensorV2()

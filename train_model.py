@@ -1,4 +1,3 @@
-from config import get_config
 #from models.baseline_net import BaseNet
 import torch
 from data_loaders import *
@@ -7,6 +6,8 @@ from rotation_representation import calculate_T_CO_pred
 #from models.efficient_net import 
 from models import fetch_network
 import os
+from config_parser import get_dict_from_cli
+
 
 
 
@@ -93,6 +94,8 @@ def train(config):
         if i != 0 and i%save_every_n_batch == 0:
             print("Saving model to", model_save_path)
             torch.save(model.state_dict(), model_save_path)
+            print("Model output")
+            print(model_output)
     """
     END TRAIN LOOP
     """
@@ -101,7 +104,10 @@ def train(config):
 
 
 if __name__ == '__main__':
-    config = get_config()
+    try:
+        config = get_dict_from_cli()
+    except:
+        raise Exception("Include a valid config file with: ".upper()+"python train_model.py baseline_cfg")
     train(config)
 
 

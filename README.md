@@ -37,8 +37,15 @@ The repo contains two options for rotation representations:
 1. Download ModelNet40 from https://modelnet.cs.princeton.edu/
 2. Change the dataset path in **normalize_modelnet40.py** and run the file
 3. You should now have a directory named "ModelNet40-norm-ply" in project root directory
-4. Train the baseline model by running **train_model.py**
-5. Visualize some results from training the model by running **test_visualization.py**
+4. Train the baseline model by running 
+```bash
+python train_model.py baseline_cfg
+```
+where baseline_cfg is the python config file in the configs directory
+5. Visualize some results from training the model by running 
+```bash
+python test_visualization.py baseline_cfg
+```
 
 # 3. Change training parameters, network etc.
 - All configurations are in **config.py**

@@ -3,7 +3,6 @@ import os
 import numpy as np
 import spatialmath as sm
 import trimesh as tm
-from config import get_config
 from se3_helpers import *
 import matplotlib.pyplot as plt
 import pyrender

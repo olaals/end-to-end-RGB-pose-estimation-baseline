@@ -1,6 +1,5 @@
 import torch
 import numpy as np
-from config import get_config
 import matplotlib.pyplot as plt
 from se3_helpers import get_T_CO_init_and_gt
 from renderer import render_scene
@@ -9,6 +8,9 @@ from rotation_representation import calculate_T_CO_pred
 import os
 import torch
 from data_loaders import *
+from config_parser import get_dict_from_cli
+
+
 
 
 
@@ -20,13 +22,13 @@ def combine_imgs(img1, img2):
     img[:,:,1] = gs2
     return img
 
+config = get_dict_from_cli()
 
 
 batch_size = 4
 device = 'cpu'
-iter_num = 3
+iter_num = 5
 
-config = get_config()
 scene_config = config["scene_config"]
 ds_name = config["train_params"]["dataset_name"]
 cam_intrinsics = config["camera_intrinsics"]
@@ -44,7 +46,7 @@ print("Loading pretrained network", model_load_name)
 print("Testing on classes", test_classes)
 model = fetch_network(model_name, rot_repr, use_norm_depth, use_pretrained=True, pretrained_path=model_load_path)
 # Beware: model.eval() behaves weird with efficientnet, not figured out why, try commenting it out
-#model.eval()
+model.eval()
 
 
 T_CO_init, T_CO_gt = sample_T_CO_inits_and_gts(batch_size, scene_config)
@@ -64,6 +66,8 @@ for i in range(iter_num):
 
     T_CO_pred = torch.tensor(T_CO_pred).to(device)
     model_output = model(model_input)
+    print("Model output first first example")
+    print(model_output[0])
     T_CO_pred = calculate_T_CO_pred(model_output, T_CO_pred, rot_repr, cam_mats)
     T_CO_pred = T_CO_pred.detach().cpu().numpy()
     pred_imgs, norm_depth = render_batch(T_CO_pred, mesh_paths, cam_intrinsics)
@@ -82,14 +86,14 @@ for i in range(batch_size):
     gt_img = gt_imgs[i]
     ax[i,0].imshow(combine_imgs(init_img, gt_img))
     ax[i,0].axis('off')
-    ax[i,0].set_title("Green: ground truth. Red: init guess")
+    ax[i,0].set_title("Green: GT. Red: init")
     for j in range(iter_num):
         gt_img = gt_imgs[i]
         init_img = init_imgs[i]
         pred_img = pred_imgs_sequence[j][i]
         ax[i,j+1].imshow(combine_imgs(pred_img, gt_img))
         ax[i,j+1].axis('off')
-        ax[i,j+1].set_title(f'Green: ground truth. Red: prediction iter {j}')
+        ax[i,j+1].set_title(f'Green: GT. Red: pred {j}')
 
 plt.show()
 
