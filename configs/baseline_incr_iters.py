@@ -25,7 +25,7 @@ def get_config():
             "batch_size":8,
             "train_classes": ["airplane"], # all_classes or specify indivudal as ["desk", "sofa", "plant"]
             "learning_rate": 3e-4, 
-            "num_batches_to_train": 3000, # stop training after N batches
+            "num_batches_to_train": 5000, # stop training after N batches
             "optimizer":"adam",
             "num_sample_vertices": 1000,  # number of vertices sampled from the mesh, used in calculating the loss
             "device": "cuda", # cuda or cpu 
@@ -61,8 +61,8 @@ def get_config():
         },
         "advanced":{
             "use_normalized_depth": False, # use a normalized rendered depth in the model input
-            "train_iter_policy": "constant", # constant or incremental
-            "train_iter_policy_argument": 1, # if train_iter_policy is constant use a number i.e. 3, if incremental use tuple list [(100,2),(1000,3)]
+            "train_iter_policy": "incremental", # constant or incremental
+            "train_iter_policy_argument": [(1000,2),(2000,3),(3000,4)], # if train_iter_policy is constant use a number i.e. 3, if incremental use tuple list [(100,2),(1000,3)]
             "use_disentangled_loss": False, # use a loss functions which disentangles rotation, translation and depth
         },
 

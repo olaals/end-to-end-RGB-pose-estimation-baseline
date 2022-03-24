@@ -88,14 +88,14 @@ def sample_verts_to_batch(mesh_paths, num_verts_to_sample):
     verts_batch = torch.stack(verts_batch)
     return verts_batch
 
-def prepare_model_input(init_imgs, gt_imgs, norm_depths=None):
+def prepare_model_input(init_imgs, gt_imgs, norm_depths, use_norm_depth=False):
     model_input_batch = []
     for i in range(len(init_imgs)):
         init_img = init_imgs[i]
         gt_img = gt_imgs[i]
         gt_tensor = transforms(image=gt_img.astype(np.float32))["image"]
         init_tensor = transforms(image=init_img.astype(np.float32))["image"]
-        if norm_depths is None:
+        if not use_norm_depth:
             model_input = torch.cat([init_tensor, gt_tensor])
         else:
             norm_depth = norm_depths[i]

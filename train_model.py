@@ -1,7 +1,7 @@
 #from models.baseline_net import BaseNet
 import torch
 from data_loaders import *
-from loss import compute_ADD_L1_loss
+from loss import compute_ADD_L1_loss, compute_disentangled_ADD_L1_loss
 from rotation_representation import calculate_T_CO_pred
 #from models.efficient_net import 
 from models import fetch_network
@@ -43,6 +43,16 @@ def train(config):
     num_train_batches = config["train_params"]["num_batches_to_train"]
     num_sample_verts = config["train_params"]["num_sample_vertices"]
     device = config["train_params"]["device"]
+    use_disentangled_loss = config["advanced"]["use_disentangled_loss"]
+
+    # train iteration policy, i.e. determine how many iterations per batch
+    train_iter_policy_name = config["advanced"]["train_iter_policy"]
+    policy_argument = config["advanced"]["train_iter_policy_argument"]
+    if train_iter_policy_name == 'constant':
+        train_iter_policy = train_iter_policy_constant
+    elif train_iter_policy_name == 'incremental':
+        train_iter_policy = train_iter_policy_incremental
+    
 
     if(opt_name == "adam"):
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -71,34 +81,61 @@ def train(config):
     """
     TRAINING LOOP
     """
-    for i in range(num_train_batches):
-        optimizer.zero_grad()
-
+    train_examples=0
+    batch_num = 0
+    while(True):
         T_CO_init, T_CO_gt = sample_T_CO_inits_and_gts(batch_size, scene_config)
         mesh_paths = sample_mesh_paths(batch_size, ds_name, train_classes, "train")
-        init_imgs, norm_depth = render_batch(T_CO_init, mesh_paths, cam_intrinsics)
-        if not use_norm_depth: norm_depth = None
-        gt_imgs,_ = render_batch(T_CO_gt, mesh_paths, cam_intrinsics)
-        model_input = prepare_model_input(init_imgs, gt_imgs, norm_depth).to(device)
-        cam_mats = get_camera_mat_tensor(cam_intrinsics, batch_size).to(device)
         mesh_verts = sample_verts_to_batch(mesh_paths, num_sample_verts).to(device) 
-        
-        T_CO_init = torch.tensor(T_CO_init).to(device)
+        cam_mats = get_camera_mat_tensor(cam_intrinsics, batch_size).to(device)
+        gt_imgs,_ = render_batch(T_CO_gt, mesh_paths, cam_intrinsics)
         T_CO_gt = torch.tensor(T_CO_gt).to(device)
-        model_output = model(model_input)
-        T_CO_pred = calculate_T_CO_pred(model_output, T_CO_init, rotation_repr, cam_mats)
-        loss = compute_ADD_L1_loss(T_CO_gt, T_CO_pred, mesh_verts)
-        loss.backward()
-        optimizer.step()
-        print(f'Loss for train batch {i}:', loss.item())
-        if i != 0 and i%save_every_n_batch == 0:
+
+        T_CO_pred = T_CO_init # current pred is initial
+        train_iterations = train_iter_policy(batch_num, policy_argument)
+        for j in range(train_iterations):
+            optimizer.zero_grad()
+            pred_imgs, norm_depth = render_batch(T_CO_pred, mesh_paths, cam_intrinsics)
+            model_input = prepare_model_input(pred_imgs, gt_imgs, norm_depth, use_norm_depth).to(device)
+            T_CO_pred = torch.tensor(T_CO_pred).to(device)
+            model_output = model(model_input)
+            T_CO_pred_new = calculate_T_CO_pred(model_output, T_CO_pred, rotation_repr, cam_mats)
+            if not use_disentangled_loss:
+                loss = compute_ADD_L1_loss(T_CO_gt, T_CO_pred_new, mesh_verts)
+            else:
+                loss = compute_disentangled_ADD_L1_loss(T_CO_gt, T_CO_pred_new, mesh_verts)
+            loss.backward()
+            optimizer.step()
+
+            T_CO_pred = T_CO_pred_new.detach().cpu().numpy()
+            print(f'Loss for train batch {batch_num}, train iter {j}:', loss.item())
+            train_examples=train_examples+1
+
+
+        if batch_num != 0 and batch_num%save_every_n_batch == 0:
             print("Saving model to", model_save_path)
             torch.save(model.state_dict(), model_save_path)
             print("Model output")
             print(model_output)
+        batch_num += 1
+        if train_examples > num_train_batches:
+            break
     """
     END TRAIN LOOP
     """
+
+
+def train_iter_policy_constant(current_batch, num):
+    return num
+
+def train_iter_policy_incremental(current_batch, increments_tuple_list):
+    # input must have form [(300, 2), (1000,3), (3000,4)] 
+    new_train_iters = 1
+    for (batch_num, train_iters) in increments_tuple_list:
+        if (current_batch>batch_num):
+            new_train_iters = train_iters
+    return new_train_iters
+
 
 
 
@@ -109,6 +146,7 @@ if __name__ == '__main__':
     except:
         raise Exception("Include a valid config file with: ".upper()+"python train_model.py baseline_cfg")
     train(config)
+
 
 
 

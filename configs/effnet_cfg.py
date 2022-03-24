@@ -60,8 +60,10 @@ def get_config():
             "test_classes": ["airplane"],
         },
         "advanced":{
-            "use_normalized_depth": False,
-            "use_iterative_training": False,
+            "use_normalized_depth": False, # use a normalized rendered depth in the model input
+            "train_iter_policy": "constant", # constant or incremental
+            "train_iter_policy_argument": 1, # if train_iter_policy is constant use a number i.e. 3, if incremental use tuple list [(100,2),(1000,3)]
+            "use_disentangled_loss": False, # use a loss functions which disentangles rotation, translation and depth
         },
 
 

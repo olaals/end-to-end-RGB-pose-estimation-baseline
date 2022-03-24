@@ -9,10 +9,10 @@ The work is inspired by the DeepIM paper and CosyPose paper, but this repository
 The simplifications includes:
 - No handling of symmetries
 - Simpler renderer compared to CosyPose
-- No disentangled loss (see CosyPose)
 - No auxiliary training path (DeepIM)
 - Baseline network is simple
 - No cropped camera matrix
+- Optional disentangled loss (see CosyPose)
 
 \
 Links to DeepIM and CosyPose:
