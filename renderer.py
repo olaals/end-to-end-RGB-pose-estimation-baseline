@@ -82,14 +82,29 @@ if __name__ == '__main__':
     plt.imshow(img)
     plt.show()
     """
+    def combine_imgs(img1, img2):
+        gs1 = np.mean(img1, axis=2)
+        gs2 = np.mean(img2, axis=2)
+        img = np.zeros((gs1.shape[0], gs1.shape[1], 3))
+        img[:,:,0] = gs1
+        img[:,:,1] = gs2
+        return img
+
+    import sys
+    sys.path.append("configs")
+    from baseline_cfg import get_config
     config = get_config()
-    T_CO_init, T_CO_gt = get_T_CO_init_and_gt(config)
+    T_CO_init, T_CO_gt = get_T_CO_init_and_gt(config["scene_config"])
     test_mesh_path = os.path.join("irrelevant-data", "airplane_0180.ply")
-    img_gt = render_scene(test_mesh_path, T_CO_gt.data[0], config)
-    img_init = render_scene(test_mesh_path, T_CO_init.data[0], config)
-    fig,ax = plt.subplots(1,2)
+    img_gt,_ = render_scene(test_mesh_path, T_CO_gt.data[0], config["camera_intrinsics"])
+    img_init, _= render_scene(test_mesh_path, T_CO_init.data[0], config["camera_intrinsics"])
+    fig,ax = plt.subplots(1,4)
     ax[0].imshow(img_init)
     ax[1].imshow(img_gt)
+    ax[2].imshow(combine_imgs(img_init, img_gt))
+    ax[3].imshow(combine_imgs(img_gt, img_gt))
+
+
     plt.show()
 
 
