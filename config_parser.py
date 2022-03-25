@@ -21,7 +21,6 @@ def get_config_from_args(args):
         print("ERROR")
         raise Exception("No config file named ".upper()+config_name.upper())
     config_dict = config_import.get_config()
-    config_dict["config_name"] = config_name
     return config_dict
 
 def get_dict_from_cli():

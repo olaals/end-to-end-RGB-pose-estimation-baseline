@@ -68,7 +68,7 @@ def train(config):
     print("Batch size", batch_size, "Learning rate", learning_rate, "Optimizer", opt_name.upper())
     print("Training on device", device)
     if use_pretrained:
-        print("Pretrained model is loaded from", predtrained_path)
+        print("Pretrained model is loaded from", pretrained_path)
     else:
         print("No pretrained model used, training from scratch")
     print("The model will be saved to", model_save_path)

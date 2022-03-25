@@ -11,8 +11,7 @@ all_classes_modelnet40 = ["airplane", "bench", "bowl", "cone", "desk", "flower_p
 def get_config():
 
     this_file_name = os.path.split(os.path.splitext(__file__)[0])[-1]
-    print("THIS FILE NAME")
-    print(this_file_name)
+    print("Config file name:", this_file_name)
 
     rotation_rep = "SVD" #SVD or 6D,
     backend_network = "effnet_b3"
@@ -21,6 +20,7 @@ def get_config():
 
 
     return {
+        "config_name":this_file_name,
         "train_params":{
             "batch_size":8,
             "train_classes": ["airplane"], # all_classes or specify indivudal as ["desk", "sofa", "plant"]
@@ -48,22 +48,25 @@ def get_config():
             "world_to_object_angle_deviation":25, #degrees
         },
         "model_io":{
-            "use_pretrained_model": False,  # start training from a pretrained model
-            "pretrained_model_name": "SPECIFY_PREDTRAINED_PATH_HERE.pth", # load predtrained model, if use_pretrained_model = True
+            "use_pretrained_model": True,  # start training from a pretrained model
+            "pretrained_model_name": "effnet_incr_disentl-effnet_b3-SVD.pth", # load predtrained model, if use_pretrained_model = True
             "model_save_dir": os.path.join("models", "saved-models"),
             "model_save_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
             "batch_model_save_interval": 10,  # save model during tranining after every N batch trained
         },
         "test_config":{
+            "batch_size": 8, 
+            "predict_iterations": 3,
+            "iterations_per_class": 1,
             "model_load_dir": os.path.join("models", "saved-models"),
             "model_load_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
-            "test_classes": ["airplane"],
+            "test_classes": ["airplane", "laptop", "plant"],
         },
         "advanced":{
             "use_normalized_depth": False, # use a normalized rendered depth in the model input
-            "train_iter_policy": "constant", # constant or incremental
-            "train_iter_policy_argument": 1, # if train_iter_policy is constant use a number i.e. 3, if incremental use tuple list [(100,2),(1000,3)]
-            "use_disentangled_loss": False, # use a loss functions which disentangles rotation, translation and depth
+            "train_iter_policy": "incremental", # constant or incremental
+            "train_iter_policy_argument": [(1,3),(2000,3),(3000,3)], # if train_iter_policy is constant use a number i.e. 3, if incremental use tuple list [(100,2),(1000,3)]
+            "use_disentangled_loss": True, # use a loss functions which disentangles rotation, translation and depth
         },
 
 

@@ -1,6 +1,6 @@
 from rotation_representation import calculate_T_CO_pred
 
-def compute_ADD_L1_loss(TCO_gt, TCO_pred, points):
+def compute_ADD_L1_loss(TCO_gt, TCO_pred, points, use_batch_mean=True):
     """
     copied from
     https://github.com/ylabbe/cosypose/blob/master/cosypose/lib3d/mesh_losses.py
@@ -10,7 +10,10 @@ def compute_ADD_L1_loss(TCO_gt, TCO_pred, points):
     assert TCO_pred.shape == (bsz, 4, 4) and TCO_gt.shape == (bsz, 4, 4)
     assert points.dim() == 3 and points.shape[-1] == 3
     dists = (transform_pts(TCO_gt, points) - transform_pts(TCO_pred, points)).abs().mean(dim=(-1, -2))
-    return dists.mean()
+    if use_batch_mean:
+        return dists.mean()
+    else:
+        return dists
 
 
 

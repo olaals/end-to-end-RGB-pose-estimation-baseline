@@ -25,7 +25,7 @@ def combine_imgs(img1, img2):
 config = get_dict_from_cli()
 
 
-batch_size = 4
+batch_size = 5
 device = 'cpu'
 iter_num = 5
 

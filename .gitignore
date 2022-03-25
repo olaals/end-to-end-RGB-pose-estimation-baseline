@@ -1,5 +1,6 @@
 ModelNet40-norm-ply
 *.pth
+logdir/*
 
 
 # Byte-compiled / optimized / DLL files
