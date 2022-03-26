@@ -51,13 +51,18 @@ where **baseline_cfg** is the python config file named **baseline_cfg.py** in th
 ```bash
 python test_visualization.py baseline_cfg
 ```
+You should get an image similar to the one below after training the model for a while 
+![Alt text](irrelevant-data/test_visualization_during_training.png "Visualization during training")
+
 
 ## 3. Change training parameters, network etc.
 - All configurations are in the configs file in the config directory
 - Change the parameters in those configuration files, or make new ones. New configuration files will save a new state dict of the network in models/saved-models
 - If you wish to include another network, place it in models, and implement loading it in **models/fetch_network.py**, then create a new config file for it.
 
-## 4: Suggestions for things to test
+
+
+## 5: Suggestions for things to test
 - Compare baseline network with EfficientNet (used in CosyPose)
 - Compare baseline network with another network of your choice
 - Use another version of EfficientNet (current is EfficientNet-b3) for another image size, see if a larger or smaller image size affects the accuracy and robustness of the method. Check out the EfficientNet paper and Pytorch implementation of EfficieNet for the suggested image sizes.
