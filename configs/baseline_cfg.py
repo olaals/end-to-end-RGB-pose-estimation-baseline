@@ -25,8 +25,9 @@ def get_config():
             "batch_size":8,
             "train_classes": ["airplane"], # all_classes or specify indivudal as ["desk", "sofa", "plant"]
             "learning_rate": 3e-4, 
-            "num_batches_to_train": 3000, # stop training after N batches
+            "num_batches_to_train": 100000, # stop training after N batches
             "optimizer":"adam",
+            "loss": "add_l1",
             "num_sample_vertices": 1000,  # number of vertices sampled from the mesh, used in calculating the loss
             "device": "cuda", # cuda or cpu 
             "dataset_name": "ModelNet40-norm-ply",
@@ -52,7 +53,11 @@ def get_config():
             "pretrained_model_name": "", # load predtrained model, if use_pretrained_model = True
             "model_save_dir": os.path.join("models", "saved-models"),
             "model_save_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
-            "batch_model_save_interval": 15,  # save model during tranining after every N batch trained
+            "batch_model_save_interval": 25,  # save model during tranining after every N batch trained
+        },
+        "logging":{
+            "logdir": os.path.join("logdir", this_file_name),
+            "loss_log_interval":50,
         },
         "test_config":{
             "batch_size": 8, 
@@ -60,13 +65,12 @@ def get_config():
             "iterations_per_class": 1,
             "model_load_dir": os.path.join("models", "saved-models"),
             "model_load_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
-            "test_classes": ["airplane", "laptop", "plant"],
+            "test_classes": ["airplane"],
         },
         "advanced":{
             "use_normalized_depth": False, # use a normalized rendered depth in the model input
             "train_iter_policy": "constant", # constant or incremental
             "train_iter_policy_argument": 1, # if train_iter_policy is constant use a number i.e. 3, if incremental use tuple list [(100,2),(1000,3)]
-            "use_disentangled_loss": False, # use a loss functions which disentangles rotation, translation and depth
         },
 
 

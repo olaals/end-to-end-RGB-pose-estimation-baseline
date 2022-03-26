@@ -52,7 +52,7 @@ model.eval()
 T_CO_init, T_CO_gt = sample_T_CO_inits_and_gts(batch_size, scene_config)
 mesh_paths = sample_mesh_paths(batch_size, ds_name, test_classes, "test")
 init_imgs, norm_depth = render_batch(T_CO_init, mesh_paths, cam_intrinsics)
-if not use_norm_depth: norm_depth=None
+#if not use_norm_depth: norm_depth=None
 gt_imgs, _ = render_batch(T_CO_gt, mesh_paths, cam_intrinsics)
 
 T_CO_pred = T_CO_init
@@ -61,7 +61,7 @@ pred_imgs_sequence = []
 T_CO_gt = torch.tensor(T_CO_gt).to(device)
 with torch.no_grad():
     for i in range(iter_num):
-        model_input = prepare_model_input(pred_imgs, gt_imgs, norm_depth).to(device)
+        model_input = prepare_model_input(pred_imgs, gt_imgs, norm_depth, use_norm_depth).to(device)
         cam_mats = get_camera_mat_tensor(cam_intrinsics, batch_size).to(device)
         #mesh_verts = sample_verts_to_batch(mesh_paths, num_sample_verts).to(device)
 

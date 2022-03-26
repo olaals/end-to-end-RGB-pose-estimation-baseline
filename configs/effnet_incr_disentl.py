@@ -25,7 +25,7 @@ def get_config():
             "batch_size":8,
             "train_classes": ["airplane"], # all_classes or specify indivudal as ["desk", "sofa", "plant"]
             "learning_rate": 3e-4, 
-            "num_batches_to_train": 3000, # stop training after N batches
+            "num_batches_to_train": 100000, # stop training after N batches
             "optimizer":"adam",
             "num_sample_vertices": 1000,  # number of vertices sampled from the mesh, used in calculating the loss
             "device": "cuda", # cuda or cpu 
@@ -54,13 +54,17 @@ def get_config():
             "model_save_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
             "batch_model_save_interval": 10,  # save model during tranining after every N batch trained
         },
+        "logging":{
+            "logdir": os.path.join("logdir", this_file_name),
+            "loss_log_interval":50,
+        },
         "test_config":{
             "batch_size": 8, 
             "predict_iterations": 3,
             "iterations_per_class": 1,
             "model_load_dir": os.path.join("models", "saved-models"),
             "model_load_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
-            "test_classes": ["airplane", "laptop", "plant"],
+            "test_classes": ["airplane"],
         },
         "advanced":{
             "use_normalized_depth": False, # use a normalized rendered depth in the model input

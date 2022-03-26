@@ -1,5 +1,5 @@
 #from models.baseline_net import BaseNet
-import torch
+import torch 
 from data_loaders import *
 from loss import compute_ADD_L1_loss, compute_disentangled_ADD_L1_loss
 from rotation_representation import calculate_T_CO_pred
@@ -7,6 +7,31 @@ from rotation_representation import calculate_T_CO_pred
 from models import fetch_network
 import os
 from config_parser import get_dict_from_cli
+import pickle
+import matplotlib.pyplot as plt
+
+def pickle_log_dict(log_dict, logdir):
+    save_path = os.path.join(logdir, "log_dict.pkl")
+    with open(save_path, 'wb') as handle:
+        pickle.dump(log_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+def save_loss_plot(losses, training_examples, loss_name, logdir):
+    assert len(losses) == len(training_examples)
+    fig,ax = plt.subplots()
+    fig.set_size_inches(9.5, 5.5)
+    ax.set_title(loss_name)
+    ax.set_xlabel("Training examples")
+    ax.set_ylabel(loss_name)
+    ax.set_yscale('log')
+    plt.plot(training_examples, losses)
+    save_path = os.path.join(logdir, loss_name.replace(" ", "-")+".png")
+    plt.savefig(save_path)
+
+def logging(log_dict, logdir, batch_num, train_examples):
+    current_loss = log_dict["loss"]["add_l1"][:batch_num]
+    current_train_ex =log_dict["loss"]["train_ex"][:batch_num] 
+    save_loss_plot(current_loss, current_train_ex, "ADD L1 Loss", logdir)
+    pickle_log_dict(log_dict, logdir)
 
 
 
@@ -43,7 +68,7 @@ def train(config):
     num_train_batches = config["train_params"]["num_batches_to_train"]
     num_sample_verts = config["train_params"]["num_sample_vertices"]
     device = config["train_params"]["device"]
-    use_disentangled_loss = config["advanced"]["use_disentangled_loss"]
+    loss_fn_name = config["train_params"]["loss"]
 
     # train iteration policy, i.e. determine how many iterations per batch
     train_iter_policy_name = config["advanced"]["train_iter_policy"]
@@ -52,6 +77,8 @@ def train(config):
         train_iter_policy = train_iter_policy_constant
     elif train_iter_policy_name == 'incremental':
         train_iter_policy = train_iter_policy_incremental
+    else:
+        assert False
     
 
     if(opt_name == "adam"):
@@ -75,14 +102,23 @@ def train(config):
     if use_norm_depth:
         print("The model is trained with the normalized depth from the CAD model (advanced)")
     print("")
-
+    
+    # logging
+    log_dict = {}
+    log_dict["loss"] = {}
+    log_dict["loss"]["add_l1"] = np.zeros((num_train_batches))
+    log_dict["loss"]["train_ex"] = np.zeros((num_train_batches))
+    logdir = config["logging"]["logdir"]
+    os.makedirs(logdir, exist_ok=True)
 
 
     """
     TRAINING LOOP
     """
     train_examples=0
-    batch_num = 0
+    new_batch_num=0
+    batch_num=0
+
     while(True):
         T_CO_init, T_CO_gt = sample_T_CO_inits_and_gts(batch_size, scene_config)
         mesh_paths = sample_mesh_paths(batch_size, ds_name, train_classes, "train")
@@ -100,26 +136,29 @@ def train(config):
             T_CO_pred = torch.tensor(T_CO_pred).to(device)
             model_output = model(model_input)
             T_CO_pred_new = calculate_T_CO_pred(model_output, T_CO_pred, rotation_repr, cam_mats)
-            if not use_disentangled_loss:
-                loss = compute_ADD_L1_loss(T_CO_gt, T_CO_pred_new, mesh_verts)
-            else:
-                loss = compute_disentangled_ADD_L1_loss(T_CO_gt, T_CO_pred_new, mesh_verts)
-            loss.backward()
+            addl1_loss = compute_ADD_L1_loss(T_CO_gt, T_CO_pred_new, mesh_verts)
+            if loss_fn_name == "add_l1":
+                addl1_loss.backward()
+            elif loss_fn_name == "add_l1_disentangled":
+                disentl_loss = compute_disentangled_ADD_L1_loss(T_CO_gt, T_CO_pred_new, mesh_verts)
+                disentl_loss.backward()
             optimizer.step()
-
             T_CO_pred = T_CO_pred_new.detach().cpu().numpy()
-            print(f'Loss for train batch {batch_num}, train iter {j}:', loss.item())
-            train_examples=train_examples+1
 
+            # Printing and logging
+            print(f'ADD L1 loss for train batch {new_batch_num}, train iter {j}:', addl1_loss.item())
+            log_dict["loss"]["add_l1"][batch_num] = addl1_loss.item()
+            log_dict["loss"]["train_ex"][batch_num] = train_examples
 
-        if batch_num != 0 and batch_num%save_every_n_batch == 0:
-            print("Saving model to", model_save_path)
-            torch.save(model.state_dict(), model_save_path)
-            print("Model output")
-            print(model_output)
-        batch_num += 1
-        if train_examples > num_train_batches:
-            break
+            if batch_num != 0 and batch_num%save_every_n_batch == 0:
+                print("Saving model to", model_save_path)
+                torch.save(model.state_dict(), model_save_path)
+                logging(log_dict, logdir, batch_num, train_examples)
+            if batch_num > num_train_batches:
+                break
+            train_examples=train_examples+batch_size
+            batch_num += 1
+        new_batch_num += 1
     """
     END TRAIN LOOP
     """
@@ -146,6 +185,10 @@ if __name__ == '__main__':
     except:
         raise Exception("Include a valid config file with: ".upper()+"python train_model.py baseline_cfg")
     train(config)
+
+    
+    
+
 
 
 
