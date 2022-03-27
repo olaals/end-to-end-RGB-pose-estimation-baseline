@@ -49,8 +49,8 @@ def get_config():
             "world_to_object_angle_deviation":25, #degrees
         },
         "model_io":{
-            "use_pretrained_model": False,  # start training from a pretrained model
-            "pretrained_model_name": "", # load predtrained model, if use_pretrained_model = True
+            "use_pretrained_model": True,  # start training from a pretrained model
+            "pretrained_model_name": "baseline_cfg-baseline-SVD.pth", # load predtrained model, if use_pretrained_model = True
             "model_save_dir": os.path.join("models", "saved-models"),
             "model_save_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
             "batch_model_save_interval": 25,  # save model during tranining after every N batch trained

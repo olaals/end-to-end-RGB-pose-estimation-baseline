@@ -27,6 +27,7 @@ def get_config():
             "learning_rate": 3e-4, 
             "num_batches_to_train": 100000, # stop training after N batches
             "optimizer":"adam",
+            "loss": "add_l1_disentangled",
             "num_sample_vertices": 1000,  # number of vertices sampled from the mesh, used in calculating the loss
             "device": "cuda", # cuda or cpu 
             "dataset_name": "ModelNet40-norm-ply",
@@ -52,7 +53,7 @@ def get_config():
             "pretrained_model_name": "effnet_incr_disentl-effnet_b3-SVD.pth", # load predtrained model, if use_pretrained_model = True
             "model_save_dir": os.path.join("models", "saved-models"),
             "model_save_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
-            "batch_model_save_interval": 10,  # save model during tranining after every N batch trained
+            "batch_model_save_interval": 50,  # save model during tranining after every N batch trained
         },
         "logging":{
             "logdir": os.path.join("logdir", this_file_name),
@@ -70,7 +71,6 @@ def get_config():
             "use_normalized_depth": False, # use a normalized rendered depth in the model input
             "train_iter_policy": "incremental", # constant or incremental
             "train_iter_policy_argument": [(1,3),(2000,3),(3000,3)], # if train_iter_policy is constant use a number i.e. 3, if incremental use tuple list [(100,2),(1000,3)]
-            "use_disentangled_loss": True, # use a loss functions which disentangles rotation, translation and depth
         },
 
 
