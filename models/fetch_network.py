@@ -1,5 +1,6 @@
 from .baseline_net import BaseNet
 from .efficient_net import EffNetB3
+from .perciever import Perceiver
 import torch
 
 def fetch_network(model_name, rot_repr, use_norm_depth=False, use_pretrained=False, pretrained_path=""):
@@ -25,6 +26,11 @@ def fetch_network(model_name, rot_repr, use_norm_depth=False, use_pretrained=Fal
         return model
     elif model_name == 'effnet_b3':
         model = EffNetB3(in_channels,out_features)
+        if use_pretrained:
+            model.load_state_dict(torch.load(pretrained_path))
+        return model
+    elif model_name == 'perceiver':
+        model = Perceiver(in_channels,out_features)
         if use_pretrained:
             model.load_state_dict(torch.load(pretrained_path))
         return model
