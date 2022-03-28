@@ -2,6 +2,7 @@ numpy
 spatialmath-python
 pyrender
 efficientnet_pytorch
+perceiver-pytorch
 albumentations
 matplotlib
 argparse

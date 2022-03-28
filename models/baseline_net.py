@@ -39,3 +39,4 @@ if __name__ == '__main__':
     out = model(tens)
     print(out.shape) # [8,9]
 
+

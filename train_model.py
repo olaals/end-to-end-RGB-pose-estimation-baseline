@@ -9,6 +9,8 @@ import os
 from config_parser import get_dict_from_cli
 import pickle
 import matplotlib.pyplot as plt
+from visualization import visualize_examples
+from test_model import evaluate_model
 
 def pickle_log_dict(log_dict, logdir):
     save_path = os.path.join(logdir, "log_dict.pkl")
@@ -26,12 +28,64 @@ def save_loss_plot(losses, training_examples, loss_name, logdir):
     plt.plot(training_examples, losses)
     save_path = os.path.join(logdir, loss_name.replace(" ", "-")+".png")
     plt.savefig(save_path)
+    plt.close()
 
-def logging(log_dict, logdir, batch_num, train_examples):
-    current_loss = log_dict["loss"]["add_l1"][:batch_num]
-    current_train_ex =log_dict["loss"]["train_ex"][:batch_num] 
-    save_loss_plot(current_loss, current_train_ex, "ADD L1 Loss", logdir)
-    pickle_log_dict(log_dict, logdir)
+def save_plot_validation_loss(val_data_struct,logdir, loss_name):
+    fig,ax = plt.subplots()
+    fig.set_size_inches(9.5, 5.5)
+    ax.set_title("Validation " + loss_name)
+    ax.set_xlabel("Training examples")
+    ax.set_ylabel(loss_name)
+    ax.set_yscale('log')
+    train_exs = []
+    val_losses_arr = []
+    for (train_ex, val_losses) in val_data_struct:
+        train_exs.append(train_ex)
+        val_losses_arr.append(val_losses)
+    val_losses = np.array(val_losses_arr)
+    train_exs = np.array(train_exs)
+    legends = []
+    for pred_iter in range(val_losses.shape[1]):
+        legends.append("Pred.iter"+str(pred_iter+1))
+        iter_val_losses = val_losses[:,pred_iter]
+        plt.plot(train_exs,iter_val_losses, label="Iter. "+str(pred_iter))
+    ax.legend(legends)
+    save_path = os.path.join(logdir, "validation-"+loss_name.replace(" ", "-")+".png")
+    plt.savefig(save_path)
+        
+        
+        
+
+
+def logging(model, config, log_dict, logdir, batch_num, train_examples):
+    log_interval = config["logging"]["log_save_interval"]
+    if(batch_num%log_interval == 0):
+        current_loss = log_dict["loss"]["add_l1"][:batch_num]
+        current_train_ex =log_dict["loss"]["train_ex"][:batch_num] 
+        save_loss_plot(current_loss, current_train_ex, "ADD L1 Loss", logdir)
+        pickle_log_dict(log_dict, logdir)
+    
+    save_viz_batches = config["logging"]["save_visualization_at_batches"]
+    if batch_num in save_viz_batches:
+        viz_dir = os.path.join(logdir, "visualizations")
+        os.makedirs(viz_dir, exist_ok=True)
+        viz_save_path  = os.path.join(viz_dir, "viz-at-train-ex-"+str(train_examples)+".png")
+        visualize_examples(config, "train", show_fig=False, save_fig=True, save_path=viz_save_path)
+
+    validation_interval = config["logging"]["validation_interval"]
+    if(batch_num%validation_interval == 0):
+        loss_dict, mean_losses = evaluate_model(model, config, "train", use_all_examples=False, max_examples_from_each_class=32)
+        log_dict["val_loss_dicts"].append((train_examples, loss_dict))
+        log_dict["val_loss"].append((train_examples, mean_losses))
+        pickle_log_dict(log_dict, logdir)
+        save_plot_validation_loss(log_dict["val_loss"], logdir, "ADD L1 loss")
+
+
+        
+
+
+
+    model.train()
 
 
 
@@ -108,6 +162,8 @@ def train(config):
     log_dict["loss"] = {}
     log_dict["loss"]["add_l1"] = np.zeros((num_train_batches))
     log_dict["loss"]["train_ex"] = np.zeros((num_train_batches))
+    log_dict["val_loss_dicts"] = []
+    log_dict["val_loss"] = []
     logdir = config["logging"]["logdir"]
     os.makedirs(logdir, exist_ok=True)
 
@@ -149,11 +205,11 @@ def train(config):
             print(f'ADD L1 loss for train batch {new_batch_num}, train iter {j}:', addl1_loss.item())
             log_dict["loss"]["add_l1"][batch_num] = addl1_loss.item()
             log_dict["loss"]["train_ex"][batch_num] = train_examples
+            logging(model, config, log_dict, logdir, batch_num, train_examples)
 
             if batch_num != 0 and batch_num%save_every_n_batch == 0:
                 print("Saving model to", model_save_path)
                 torch.save(model.state_dict(), model_save_path)
-                logging(log_dict, logdir, batch_num, train_examples)
             if batch_num > num_train_batches:
                 break
             train_examples=train_examples+batch_size

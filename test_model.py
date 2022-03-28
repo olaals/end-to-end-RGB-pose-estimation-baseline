@@ -7,10 +7,8 @@ from models import fetch_network
 import os
 from config_parser import get_dict_from_cli
 import numpy as np
-
 from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
-
 import seaborn as sb
 
 
@@ -46,31 +44,25 @@ def save_loss_bar_plot(loss_dict, logdir):
 
 
 
-def test(config):
+def evaluate_model(model, config, test_or_train_ds, use_all_examples=True, max_examples_from_each_class=10):
+    model.eval()
     scene_config = config["scene_config"]
+    use_norm_depth = config["advanced"]["use_normalized_depth"]
+    rotation_repr = config["network"]["rotation_representation"]
 
     ds_name = config["train_params"]["dataset_name"]
-    test_classes = config["test_config"]["test_classes"]
+    if(test_or_train_ds == 'train'):
+        classes = config["train_params"]["train_classes"]
+    elif(test_or_train_ds == 'test'):
+        classes = config["test_config"]["test_classes"]
+    else:
+        assert False
 
-    # model load parameters
-    model_name = config["network"]["backend_network"]
-    rotation_repr = config["network"]["rotation_representation"]
-    device = config["train_params"]["device"]
-    use_pretrained = config["model_io"]["use_pretrained_model"]
-    model_save_dir = config["model_io"]["model_save_dir"]
-    pretrained_name = config["model_io"]["pretrained_model_name"]
-    pretrained_path = os.path.join(model_save_dir, pretrained_name)
-    use_norm_depth = config["advanced"]["use_normalized_depth"]
-    # model saving
-    save_every_n_batch = config["model_io"]["batch_model_save_interval"]
-    model_save_name = config["model_io"]["model_save_name"]
-    model_save_path = os.path.join(model_save_dir, model_save_name)
 
     cam_intrinsics = config["camera_intrinsics"]
 
-    model = fetch_network(model_name, rotation_repr, use_norm_depth, use_pretrained, pretrained_path)
+    device = config["train_params"]["device"]
     model = model.to(device)
-    model.eval()
 
     #test params
     batch_size = config["test_config"]["batch_size"]
@@ -81,18 +73,17 @@ def test(config):
     test_iterations_per_class= config["test_config"]["iterations_per_class"]
     test_predict_iterations = config["test_config"]["predict_iterations"]
 
-    # print training info
-    print("")
-    print(" ### TESTING IS STARTING ### ")
-    print("Loading backend network", model_name.upper(), "with rotation representation", rotation_repr)
     print("Batch size", batch_size)
     print("Testing on device", device)
-    print("Testing on classes \n", test_classes)
+    print("Testing on classes \n", classes)
 
     loss_dict = {}
 
-    for test_class in test_classes:
-        all_class_test_paths = get_dataset_class_paths(ds_name, test_class, "test")
+    for test_class in classes:
+        all_class_test_paths = get_dataset_class_paths(ds_name, test_class, test_or_train_ds)
+        if not use_all_examples:
+            if len(all_class_test_paths) > max_examples_from_each_class:
+                all_class_test_paths = all_class_test_paths[:max_examples_from_each_class]
         loss_dict[test_class] = np.zeros((len(all_class_test_paths), test_iterations_per_class, test_predict_iterations))
         for test_iter in range(test_iterations_per_class):
             seen_train_ex = 0
@@ -123,15 +114,29 @@ def test(config):
                         loss_dict[test_class][seen_train_ex-actual_bsz:seen_train_ex, test_iter, pred_iter] = loss.cpu().numpy()
 
 
+    
 
 
+    num_classes = 0
+    mean_losses = np.zeros((test_predict_iterations))
+    out_dict = {}
+    for classname in loss_dict:
+        loss_array = loss_dict[classname]
+        average_loss_per_pred_iter = np.mean(np.mean(loss_array, axis=0), axis=0)
+        out_dict[classname] = {}
+        num_classes += 1
+        for i in range(len(average_loss_per_pred_iter)):
+            loss = average_loss_per_pred_iter[i]
+            out_dict[classname]["iter"+str(i)] = loss
+            mean_losses[i] += loss
 
-    config_name = config["config_name"]
-    logdir = os.path.join("logdir", config_name)
-    os.makedirs(logdir, exist_ok=True)
-        #print(all_class_test_paths[0])
-    save_loss_bar_plot(loss_dict, logdir)
+    mean_losses = mean_losses/num_classes
 
+        
+    
+
+
+    return out_dict, mean_losses
 
     
 
@@ -140,9 +145,27 @@ def test(config):
 if __name__ == '__main__':
     try:
         config = get_dict_from_cli()
+        # model load parameters
+        model_name = config["network"]["backend_network"]
+        rotation_repr = config["network"]["rotation_representation"]
+        use_pretrained = config["model_io"]["use_pretrained_model"]
+        model_save_dir = config["model_io"]["model_save_dir"]
+        pretrained_name = config["model_io"]["pretrained_model_name"]
+        pretrained_path = os.path.join(model_save_dir, pretrained_name)
+        use_norm_depth = config["advanced"]["use_normalized_depth"]
+        model = fetch_network(model_name, rotation_repr, use_norm_depth, use_pretrained, pretrained_path)
+        logdir = config["logging"]["logdir"]
+        os.makedirs(logdir, exist_ok=True)
+        # print training info
+        print("")
+        print(" ### TESTING IS STARTING ### ")
+        print("Loading backend network", model_name.upper(), "with rotation representation", rotation_repr)
+        loss_dict,mean_loss = evaluate_model(model, config, "test", False, 10)
+        print(loss_dict)
+        print("Mean loss", mean_loss)
+        #save_loss_bar_plot(loss_dict, logdir)
     except:
         raise Exception("Include a valid config file with: ".upper()+"python train_model.py baseline_cfg")
-    test(config)
 
 
 

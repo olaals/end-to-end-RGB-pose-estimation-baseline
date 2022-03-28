@@ -57,7 +57,9 @@ def get_config():
         },
         "logging":{
             "logdir": os.path.join("logdir", this_file_name),
-            "loss_log_interval":50,
+            "save_visualization_at_batches": [100, 500, 1000, 2000, 5000, 10000, 20000, 30000, 40000, 50000, 70000, 90000],
+            "log_save_interval":20,
+            "validation_interval":10,
         },
         "test_config":{
             "batch_size": 8, 

@@ -97,7 +97,3 @@ below shows the shorthand notations used, where T_CO is of particular importance
 ![Alt text](irrelevant-data/scene-frames.png "Scene frames")
 
 
-
-**License**:
-I included an MIT license, but feel free to copy any code without citing this repository. If you copy any code which stems from another repository in this repository, read their specific license and cite accordingly.
-

@@ -1,6 +1,6 @@
 from .baseline_net import BaseNet
 from .efficient_net import EffNetB3
-from .perciever import Perceiver
+from .perceiver import Perceiver
 import torch
 
 def fetch_network(model_name, rot_repr, use_norm_depth=False, use_pretrained=False, pretrained_path=""):

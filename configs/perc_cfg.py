@@ -14,7 +14,7 @@ def get_config():
     print("Config file name:", this_file_name)
 
     rotation_rep = "SVD" #SVD or 6D,
-    backend_network = "baseline"
+    backend_network = "perceiver"
 
 
 
@@ -49,18 +49,17 @@ def get_config():
             "world_to_object_angle_deviation":25, #degrees
         },
         "model_io":{
-            "use_pretrained_model": True,  # start training from a pretrained model
-            "pretrained_model_name": "baseline_cfg-baseline-SVD.pth", # load predtrained model, if use_pretrained_model = True
+            "use_pretrained_model": False,  # start training from a pretrained model
+            "pretrained_model_name": "", # load predtrained model, if use_pretrained_model = True
             "model_save_dir": os.path.join("models", "saved-models"),
             "model_save_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
             "batch_model_save_interval": 25,  # save model during tranining after every N batch trained
         },
         "logging":{
             "logdir": os.path.join("logdir", this_file_name),
-            "save_visualization_at_batches": [100, 500, 1000, 2000, 5000, 10000, 20000, 30000, 40000, 50000, 70000, 90000],
+            "save_visualization_at_batches": [5, 10, 100, 500, 1000, 2000, 5000, 10000, 20000, 30000, 40000, 50000, 70000, 90000],
             "log_save_interval":10,
-            "validation_interval":8,
-
+            "validation_interval":10,
         },
         "test_config":{
             "batch_size": 8, 
@@ -68,7 +67,7 @@ def get_config():
             "iterations_per_class": 1,
             "model_load_dir": os.path.join("models", "saved-models"),
             "model_load_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
-            "test_classes": ["airplane"],
+            "test_classes": ["airplane","plant","chair"],
         },
         "advanced":{
             "use_normalized_depth": False, # use a normalized rendered depth in the model input
