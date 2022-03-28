@@ -1,7 +1,7 @@
 #from models.baseline_net import BaseNet
 import torch 
 from data_loaders import *
-from loss import compute_ADD_L1_loss, compute_disentangled_ADD_L1_loss
+from loss import compute_ADD_L1_loss, compute_disentangled_ADD_L1_loss, compute_scaled_disentl_ADD_L1_loss
 from rotation_representation import calculate_T_CO_pred
 #from models.efficient_net import 
 from models import fetch_network
@@ -52,8 +52,7 @@ def save_plot_validation_loss(val_data_struct,logdir, loss_name):
     ax.legend(legends)
     save_path = os.path.join(logdir, "validation-"+loss_name.replace(" ", "-")+".png")
     plt.savefig(save_path)
-        
-        
+    plt.close()
         
 
 
@@ -80,13 +79,7 @@ def logging(model, config, log_dict, logdir, batch_num, train_examples):
         pickle_log_dict(log_dict, logdir)
         save_plot_validation_loss(log_dict["val_loss"], logdir, "ADD L1 loss")
 
-
-        
-
-
-
     model.train()
-
 
 
 
@@ -198,6 +191,10 @@ def train(config):
             elif loss_fn_name == "add_l1_disentangled":
                 disentl_loss = compute_disentangled_ADD_L1_loss(T_CO_gt, T_CO_pred_new, mesh_verts)
                 disentl_loss.backward()
+            elif loss_fn_name == "add_l1_disentl_scaled":
+                sc_disentl_loss = compute_scaled_disentl_ADD_L1_loss(T_CO_pred, T_CO_pred_new, T_CO_gt, mesh_verts)
+                sc_disentl_loss.backward()
+
             optimizer.step()
             T_CO_pred = T_CO_pred_new.detach().cpu().numpy()
 

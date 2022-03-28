@@ -1,3 +1,4 @@
+import torch
 from rotation_representation import calculate_T_CO_pred
 
 def compute_ADD_L1_loss(TCO_gt, TCO_pred, points, use_batch_mean=True):
@@ -54,6 +55,31 @@ def compute_disentangled_ADD_L1_loss(T_CO_pred, T_CO_gt, points):
     depth_loss = compute_ADD_L1_loss(T_CO_gt, disent_T_CO_depth, points)
     
     disentangled_loss = rot_loss + transl_loss + depth_loss
+    return disentangled_loss
+
+
+# Experimental
+def compute_scaled_disentl_ADD_L1_loss(T_CO_pred_prev, T_CO_pred, T_CO_gt, points):
+    device = T_CO_pred.device
+    disent_T_CO_rot = T_CO_gt.clone()
+    disent_T_CO_depth = T_CO_gt.clone()
+    disent_T_CO_transl = T_CO_gt.clone()
+    T_CO_pred_prev = T_CO_pred_prev.clone().detach()
+
+    disent_T_CO_rot[:, :3, :3] = T_CO_pred[:,:3,:3]
+    disent_T_CO_transl[:, :2, 3] = T_CO_pred[:, :2, 3]
+    disent_T_CO_depth[:, 2, 3] = T_CO_pred[:, 2, 3]
+
+    rot_loss = compute_ADD_L1_loss(T_CO_gt, disent_T_CO_rot, points, False) 
+    transl_loss = compute_ADD_L1_loss(T_CO_gt, disent_T_CO_transl, points, False) 
+    depth_loss = compute_ADD_L1_loss(T_CO_gt, disent_T_CO_depth, points, False)
+
+    with torch.no_grad():
+        scaling = compute_ADD_L1_loss(T_CO_gt, T_CO_pred_prev, points, False)
+
+    scaling = torch.max(scaling, torch.ones(scaling.shape).to(device)*0.03)
+
+    disentangled_loss = ((rot_loss + transl_loss + depth_loss)/scaling).mean()
     return disentangled_loss
 
 

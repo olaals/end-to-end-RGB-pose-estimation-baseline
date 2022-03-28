@@ -27,7 +27,7 @@ def get_config():
             "learning_rate": 3e-4, 
             "num_batches_to_train": 100000, # stop training after N batches
             "optimizer":"adam",
-            "loss": "add_l1",
+            "loss": "add_l1_disentl_scaled",
             "num_sample_vertices": 1000,  # number of vertices sampled from the mesh, used in calculating the loss
             "device": "cuda", # cuda or cpu 
             "dataset_name": "ModelNet40-norm-ply",
@@ -59,7 +59,7 @@ def get_config():
             "logdir": os.path.join("logdir", this_file_name),
             "save_visualization_at_batches": [5, 10, 100, 500, 1000, 2000, 5000, 10000, 20000, 30000, 40000, 50000, 70000, 90000],
             "log_save_interval":10,
-            "validation_interval":10,
+            "validation_interval":100,
         },
         "test_config":{
             "batch_size": 8, 
