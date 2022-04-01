@@ -29,7 +29,7 @@ Change ABS_PATH_TO_MODELNET40 depending on where it is located on you pc.
 If the assert statement fails, fix the absolute path
 """
 
-ABS_PATH_TO_MODELNET40 = "/home/ola/library/datasets/ModelNet40/ModelNet40" 
+ABS_PATH_TO_MODELNET40 = "/home/ola/library/datasets/ModelNet40" 
 OUTPUT_FILE_FORMAT = "ply"
 OUTPUT_DATASET_DIR = "ModelNet40-norm-"+OUTPUT_FILE_FORMAT
 
