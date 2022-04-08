@@ -13,7 +13,7 @@ def get_config():
     this_file_name = os.path.split(os.path.splitext(__file__)[0])[-1]
     print("Config file name:", this_file_name)
 
-    rotation_rep = "SVD" #SVD or 6D,
+    rotation_rep = "6D" #SVD or 6D,
     backend_network = "effnet_b3"
 
 

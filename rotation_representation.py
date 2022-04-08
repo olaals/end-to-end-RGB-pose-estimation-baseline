@@ -40,6 +40,74 @@ def symmetric_orthogonalization(x):
   r = torch.matmul(u, vt)
   return r
 
+def so3_exp_map(
+    log_rot: torch.Tensor, eps: float = 0.0001
+    ):
+    """
+    Copied from Pytorch3D : https://pytorch3d.readthedocs.io/en/latest/_modules/pytorch3d/transforms/so3.html#so3_exp_map
+    A helper function that computes the so3 exponential map and,
+    apart from the rotation matrix, also returns intermediate variables
+    that can be re-used in other functions.
+    """
+    _, dim = log_rot.shape
+    if dim != 3:
+        raise ValueError("Input tensor shape has to be Nx3.")
+
+    nrms = (log_rot * log_rot).sum(1)
+    # phis ... rotation angles
+    rot_angles = torch.clamp(nrms, eps).sqrt()
+    rot_angles_inv = 1.0 / rot_angles
+    fac1 = rot_angles_inv * rot_angles.sin()
+    fac2 = rot_angles_inv * rot_angles_inv * (1.0 - rot_angles.cos())
+    skews = hat(log_rot)
+    skews_square = torch.bmm(skews, skews)
+
+    R = (
+        # pyre-fixme[16]: `float` has no attribute `__getitem__`.
+        fac1[:, None, None] * skews
+        + fac2[:, None, None] * skews_square
+        + torch.eye(3, dtype=log_rot.dtype, device=log_rot.device)[None]
+    )
+
+    return R
+
+def hat(v: torch.Tensor) -> torch.Tensor:
+    """
+    Copied from Pytorch3D:  https://pytorch3d.readthedocs.io/en/latest/_modules/pytorch3d/transforms/so3.html#so3_exp_map
+    Compute the Hat operator [1] of a batch of 3D vectors.
+
+    Args:
+        v: Batch of vectors of shape `(minibatch , 3)`.
+
+    Returns:
+        Batch of skew-symmetric matrices of shape
+        `(minibatch, 3 , 3)` where each matrix is of the form:
+            `[    0  -v_z   v_y ]
+             [  v_z     0  -v_x ]
+             [ -v_y   v_x     0 ]`
+
+    Raises:
+        ValueError if `v` is of incorrect shape.
+
+    [1] https://en.wikipedia.org/wiki/Hat_operator
+    """
+
+    N, dim = v.shape
+    if dim != 3:
+        raise ValueError("Input vectors have to be 3-dimensional.")
+
+    h = torch.zeros((N, 3, 3), dtype=v.dtype, device=v.device)
+
+    x, y, z = v.unbind(1)
+
+    h[:, 0, 1] = -z
+    h[:, 0, 2] = y
+    h[:, 1, 0] = z
+    h[:, 1, 2] = -x
+    h[:, 2, 0] = -y
+    h[:, 2, 1] = x
+    return h
+
 def vec_3d_to_SO3(x):
     """
     Based on the Lie Group mapping from the minimal vector space to the SO3 manifold (rot mat)
@@ -48,7 +116,7 @@ def vec_3d_to_SO3(x):
     bsz = x.shape[0]
     assert x.shape == (bsz,3)
 
-    rot_mats = pt3dtf.so3_exp_map(x)
+    rot_mats = so3_exp_map(x)
     return rot_mats
 
 
