@@ -14,7 +14,7 @@ def get_config():
     print("Config file name:", this_file_name)
 
     rotation_rep = "SVD" #SVD or 6D,
-    backend_network = "perceiver"
+    backend_network = "effnetv2_m"
 
 
 
@@ -23,11 +23,11 @@ def get_config():
         "config_name":this_file_name,
         "train_params":{
             "batch_size":8,
-            "train_classes": ["airplane"], # all_classes or specify indivudal as ["desk", "sofa", "plant"]
+            "train_classes": all_classes_modelnet40, # all_classes or specify indivudal as ["desk", "sofa", "plant"]
             "learning_rate": 3e-4, 
-            "num_batches_to_train": 100000, # stop training after N batches
+            "num_batches_to_train": 50000, # stop training after N batches
             "optimizer":"adam",
-            "loss": "add_l1_disentl_scaled",
+            "loss": "add_l1_disentangled",
             "num_sample_vertices": 1000,  # number of vertices sampled from the mesh, used in calculating the loss
             "device": "cuda", # cuda or cpu 
             "dataset_name": "ModelNet40-norm-ply",
@@ -57,10 +57,11 @@ def get_config():
         },
         "logging":{
             "logdir": os.path.join("logdir", this_file_name),
-            "save_visualization_at_batches": [5, 10, 100, 500, 1000, 2000, 5000, 10000, 20000, 30000, 40000, 50000, 70000, 90000],
+            "save_visualization_at_batches": [100, 500, 1000, 2000, 5000, 10000, 20000, 30000, 40000, 50000, 70000, 90000],
             "log_save_interval":10,
             "validation_interval":500,
             "val_examples_from_each_class":8,
+
         },
         "test_config":{
             "batch_size": 8, 
@@ -68,12 +69,12 @@ def get_config():
             "iterations_per_class": 1,
             "model_load_dir": os.path.join("models", "saved-models"),
             "model_load_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
-            "test_classes": ["airplane","plant","chair"],
+            "test_classes": all_classes_modelnet40,
         },
         "advanced":{
             "use_normalized_depth": False, # use a normalized rendered depth in the model input
-            "train_iter_policy": "constant", # constant or incremental
-            "train_iter_policy_argument": 1, # if train_iter_policy is constant use a number i.e. 3, if incremental use tuple list [(100,2),(1000,3)]
+            "train_iter_policy": "incremental", # constant or incremental
+            "train_iter_policy_argument": [(10000,2), (30000,3)], # if train_iter_policy is constant use a number i.e. 3, if incremental use tuple list [(100,2),(1000,3)]
         },
 
 

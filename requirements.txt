@@ -8,6 +8,8 @@ matplotlib
 argparse
 seaborn
 sympy
+pytorch3d
+tensorboard
 
 
 

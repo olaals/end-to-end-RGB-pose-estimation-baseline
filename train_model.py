@@ -11,11 +11,22 @@ import pickle
 import matplotlib.pyplot as plt
 from visualization import visualize_examples
 from test_model import evaluate_model
+from torch.utils.tensorboard import SummaryWriter
+import time
+import datetime
 
 def pickle_log_dict(log_dict, logdir):
     save_path = os.path.join(logdir, "log_dict.pkl")
     with open(save_path, 'wb') as handle:
         pickle.dump(log_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+def calculate_eta(start_time, perc_complete):
+    curr_time = time.time()
+    sec_since_start = curr_time - start_time
+    est_total_time = sec_since_start/perc_complete
+    est_remaining = est_total_time-sec_since_start
+    return str(datetime.timedelta(seconds=est_remaining))
+    
 
 def save_loss_plot(losses, training_examples, loss_name, logdir):
     assert len(losses) == len(training_examples)
@@ -56,7 +67,7 @@ def save_plot_validation_loss(val_data_struct,logdir, loss_name):
         
 
 
-def logging(model, config, log_dict, logdir, batch_num, train_examples):
+def logging(model, config, writer, log_dict, logdir, batch_num, train_examples):
     log_interval = config["logging"]["log_save_interval"]
     if(batch_num%log_interval == 0):
         current_loss = log_dict["loss"]["add_l1"][:batch_num]
@@ -72,12 +83,21 @@ def logging(model, config, log_dict, logdir, batch_num, train_examples):
         visualize_examples(config, "train", show_fig=False, save_fig=True, save_path=viz_save_path)
 
     validation_interval = config["logging"]["validation_interval"]
-    if(batch_num%validation_interval == 0):
-        loss_dict, mean_losses = evaluate_model(model, config, "train", use_all_examples=False, max_examples_from_each_class=32)
+    if(batch_num%validation_interval == 0 and batch_num != 0):
+        val_ex = config["logging"]["val_examples_from_each_class"]
+        loss_dict, mean_losses = evaluate_model(model, config, "train", use_all_examples=False, max_examples_from_each_class=val_ex)
         log_dict["val_loss_dicts"].append((train_examples, loss_dict))
         log_dict["val_loss"].append((train_examples, mean_losses))
         pickle_log_dict(log_dict, logdir)
         save_plot_validation_loss(log_dict["val_loss"], logdir, "ADD L1 loss")
+
+        #tensorboard
+        iter_dict = {}
+        for i in range(len(mean_losses)):
+            writer.add_scalar(f'Validation_ADD_L1_loss/Iter{i}', mean_losses[i], train_examples)
+            iter_dict[f'Iter{i}'] = mean_losses[i]
+        writer.add_scalars('Validation_ADD_L1_loss_iters', iter_dict, train_examples)
+
 
     model.train()
 
@@ -153,12 +173,16 @@ def train(config):
     # logging
     log_dict = {}
     log_dict["loss"] = {}
-    log_dict["loss"]["add_l1"] = np.zeros((num_train_batches))
-    log_dict["loss"]["train_ex"] = np.zeros((num_train_batches))
+    log_dict["loss"]["add_l1"] = np.zeros((num_train_batches+1))
+    log_dict["loss"]["train_ex"] = np.zeros((num_train_batches+1))
     log_dict["val_loss_dicts"] = []
     log_dict["val_loss"] = []
     logdir = config["logging"]["logdir"]
     os.makedirs(logdir, exist_ok=True)
+    
+    writer = SummaryWriter(log_dir=os.path.join("tensorboard", config["config_name"]))
+    
+    start_time = time.time()
 
 
     """
@@ -199,19 +223,25 @@ def train(config):
             T_CO_pred = T_CO_pred_new.detach().cpu().numpy()
 
             # Printing and logging
-            print(f'ADD L1 loss for train batch {new_batch_num}, train iter {j}:', addl1_loss.item())
+            print(f'ADD L1 loss for train batch {batch_num}, with {new_batch_num} new batches, train iter {j}:', addl1_loss.item())
             log_dict["loss"]["add_l1"][batch_num] = addl1_loss.item()
             log_dict["loss"]["train_ex"][batch_num] = train_examples
-            logging(model, config, log_dict, logdir, batch_num, train_examples)
+            logging(model, config, writer, log_dict, logdir, batch_num, train_examples)
+            writer.add_scalar("ADD_L1_loss", addl1_loss.item(), train_examples)
 
             if batch_num != 0 and batch_num%save_every_n_batch == 0:
+                perc_complete = (batch_num*1.0)/num_train_batches
                 print("Saving model to", model_save_path)
+                print(f'Trained {batch_num} of {num_train_batches}. Training {(perc_complete*100.0):.3f} % complete.')
+                print(f'Estimated remaining training time (hour,min,sec): {calculate_eta(start_time, perc_complete)}')
                 torch.save(model.state_dict(), model_save_path)
-            if batch_num > num_train_batches:
+            if batch_num >= num_train_batches:
                 break
             train_examples=train_examples+batch_size
             batch_num += 1
         new_batch_num += 1
+        if batch_num >= num_train_batches:
+            break
     """
     END TRAIN LOOP
     """
