@@ -8,6 +8,7 @@ from albumentations.pytorch.transforms import ToTensorV2
 import matplotlib.pyplot as plt
 from se3_helpers import get_T_CO_init_and_gt
 from renderer import render_scene
+import threading
 
 transforms = A.Compose([
     ToTensorV2()
@@ -80,6 +81,31 @@ def render_batch(T_COs, mesh_paths, cam_config):
     norm_depths = np.array(norm_depths)
     return imgs, norm_depths
 
+def worker_render_img(i, mesh_path, T_CO, cam_config, imgs_out, depths_out):
+    print("worker", i)
+    img, norm_depth = render_scene(mesh_path, T_CO, cam_config)
+    imgs_out[i,:,:,:] = img
+    depths_out[i,:,:] = norm_depth
+    print("worker", i, "finished")
+
+
+def render_batch_parallel(T_COs, mesh_paths, cam_config):
+    bsz = len(mesh_paths)
+    assert T_COs.shape == (bsz,4,4)
+    img_res = cam_config["image_resolution"]
+    imgs = np.zeros((bsz, img_res, img_res, 3), dtype=np.float32)
+    norm_depths = np.zeros((bsz, img_res, img_res), dtype=np.float32)
+    threads = []
+    for i in range(bsz):
+        mesh_path = mesh_paths[i]
+        T_CO = T_COs[i]
+        t = threading.Thread(target=worker_render_img, args=(i,mesh_path,T_CO,cam_config,imgs,norm_depths))
+        threads.append(t)
+        t.start()
+    for t in threads:
+        t.join()
+    return imgs, norm_depths
+
 def sample_verts_to_batch(mesh_paths, num_verts_to_sample):
     verts_batch = []
     for mesh_path in mesh_paths:
@@ -125,18 +151,34 @@ def get_camera_mat_tensor(cam_intrinsics, batch_size):
 
 
 if __name__ == '__main__':
-    cam_intr = {
-        "focal_length": 50, #mm
-        "sensor_width": 36, #mm
-        "image_resolution": 300, # width=height
-    }
-    bsz = 8
-    Ks = get_camera_mat_tensor(cam_intr, bsz)
-    print(Ks)
+    import sys
+    import time
+    sys.path.append("configs")
+    from baseline_cfg import get_config
+    config = get_config()
+    print(config)
+    scene_config = config["scene_config"]
+    print(scene_config)
+    cam_config = config["camera_intrinsics"]
+
+    T_CO_init, T_CO_gt = sample_T_CO_inits_and_gts(32, scene_config)
+    mesh_paths = sample_mesh_paths(32, "ModelNet40-norm-ply", ["airplane"], "train")
+
     
+    cur = time.time()
+    #render_batch_parallel(T_CO_init, mesh_paths, cam_config)
+    render_batch(T_CO_init, mesh_paths, cam_config)
+    fin = time.time()
+    print(fin-cur)
+
+    """
+    cur = time.time()
 
 
-    pass
+    fin = time.time()
+    print(fin-cur)
+    """
+
 
 
 
