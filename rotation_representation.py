@@ -1,4 +1,7 @@
 import torch
+import pytorch3d as pt3d
+from pytorch3d import transforms as pt3dtf
+import math
 
 def compute_rotation_matrix_from_ortho6d(poses):
     """
@@ -37,12 +40,36 @@ def symmetric_orthogonalization(x):
   r = torch.matmul(u, vt)
   return r
 
+def vec_3d_to_SO3(x):
+    """
+    Based on the Lie Group mapping from the minimal vector space to the SO3 manifold (rot mat)
+    """
+    device = x.device
+    bsz = x.shape[0]
+    assert x.shape == (bsz,3)
+
+    rot_mats = pt3dtf.so3_exp_map(x)
+    return rot_mats
+
+
+
+
+
+
+
+
+
+
+
+
 def calculate_T_CO_pred(model_output, T_CO_init, rot_repr, Ks):
     bsz = model_output.shape[0]
     if rot_repr == 'SVD':
         assert model_output.shape == (bsz, 12)
     elif rot_repr == '6D':
         assert model_output.shape == (bsz, 9)
+    elif rot_repr == '3D':
+        assert model_output.shape == (bsz, 6)
 
     assert T_CO_init.shape == (bsz, 4,4)
     assert Ks.shape == (bsz, 3,3)
@@ -57,6 +84,9 @@ def calculate_T_CO_pred(model_output, T_CO_init, rot_repr, Ks):
     elif rot_repr == '6D':
         dR = compute_rotation_matrix_from_ortho6d(model_output[:, 0:6])
         vxvyvz = model_output[:, 6:9]
+    elif rot_repr == '3D':
+        dR = vec_3d_to_SO3(model_output[:, 0:3])
+        vxvyvz = model_output[:, 3:6]
     else:
         assert False
     vx = vxvyvz[:, 0]
@@ -86,4 +116,15 @@ def calculate_T_CO_pred(model_output, T_CO_init, rot_repr, Ks):
     T_CO_pred[:, 2, 3] = z_kp1
     T_CO_pred[:, 3, :3] = torch.tensor(0)
     return T_CO_pred
+
+
+if __name__ == '__main__':
+    tens = torch.zeros((2,3))
+    tens[0][0] = math.pi/2
+    tens[0][1] = 0.0
+    tens[0][2] = 0.0
+
+    rots = vec_3d_to_SO3(tens)
+    print(rots)
+    
 

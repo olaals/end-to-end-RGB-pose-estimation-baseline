@@ -9,6 +9,8 @@ def fetch_network(model_name, rot_repr, use_norm_depth=False, use_pretrained=Fal
         out_features = 12 # 9 for rot + 3 for translation
     elif(rot_repr == '6D'):
         out_features = 9 # 6 for rot + 3 for translation
+    elif(rot_repr == '3D'):
+        out_features = 6 # 6 for rot + 3 for translation
     else:
         assert(False, "Unknown value for rotation representation in config.py")
 
