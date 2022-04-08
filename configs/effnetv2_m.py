@@ -47,6 +47,7 @@ def get_config():
             "world_to_object_gt_transl_deviation": 0.1, #meters
             "world_to_object_transl_deviation": 0.1, #meters
             "world_to_object_angle_deviation":25, #degrees
+            "use_parallel_rendering":False,
         },
         "model_io":{
             "use_pretrained_model": False,  # start training from a pretrained model

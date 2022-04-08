@@ -22,8 +22,8 @@ def get_config():
     return {
         "config_name":this_file_name,
         "train_params":{
-            "batch_size":8,
-            "train_classes": all_classes_modelnet40, # all_classes or specify indivudal as ["desk", "sofa", "plant"]
+            "batch_size":16,
+            "train_classes": ["tv_stand"], # all_classes or specify indivudal as ["desk", "sofa", "plant"]
             "learning_rate": 3e-4, 
             "num_batches_to_train": 50000, # stop training after N batches
             "optimizer":"adam",
@@ -47,6 +47,7 @@ def get_config():
             "world_to_object_gt_transl_deviation": 0.1, #meters
             "world_to_object_transl_deviation": 0.1, #meters
             "world_to_object_angle_deviation":25, #degrees
+            "use_parallel_rendering":False, # do not use with "egl" renderer in renderer.py
         },
         "model_io":{
             "use_pretrained_model": False,  # start training from a pretrained model
@@ -57,9 +58,9 @@ def get_config():
         },
         "logging":{
             "logdir": os.path.join("logdir", this_file_name),
-            "save_visualization_at_batches": [100, 500, 1000, 2000, 5000, 10000, 20000, 30000, 40000, 50000, 70000, 90000],
+            "save_visualization_at_batches": [26, 100, 500, 1000, 2000, 5000, 10000, 20000, 30000, 40000, 50000, 70000, 90000],
             "log_save_interval":10,
-            "validation_interval":250,
+            "validation_interval":20,
             "val_examples_from_each_class":8,
 
         },
@@ -69,7 +70,7 @@ def get_config():
             "iterations_per_class": 1,
             "model_load_dir": os.path.join("models", "saved-models"),
             "model_load_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
-            "test_classes": all_classes_modelnet40,
+            "test_classes": ["tv_stand"],
         },
         "advanced":{
             "use_normalized_depth": False, # use a normalized rendered depth in the model input

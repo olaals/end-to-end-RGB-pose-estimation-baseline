@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from se3_helpers import get_T_CO_init_and_gt
 from renderer import render_scene
 import threading
-
+import time
 transforms = A.Compose([
     ToTensorV2()
 ])
@@ -65,8 +65,23 @@ def sample_T_CO_inits_and_gts(batch_size, scene_config):
     T_CO_gts = np.array(T_CO_gts, dtype=np.float32)
     return T_CO_inits, T_CO_gts
 
+def render_batch(T_COs, mesh_paths, cam_config, parallel_render=False):
 
-def render_batch(T_COs, mesh_paths, cam_config):
+    now = time.time()
+    if parallel_render:
+        imgs, norm_depths = render_batch_parallel(T_COs, mesh_paths, cam_config)
+        then = time.time()
+        dur = then-now
+        print("Par render_time:", dur)
+        return imgs, norm_depths
+    else:
+        imgs, norm_depths = render_batch_sequential(T_COs, mesh_paths, cam_config)
+        then = time.time()
+        dur = then-now
+        print("Seq render_time:", dur)
+        return imgs, norm_depths
+
+def render_batch_sequential(T_COs, mesh_paths, cam_config):
     bsz = len(mesh_paths)
     assert T_COs.shape == (bsz,4,4)
     imgs = []
@@ -82,11 +97,11 @@ def render_batch(T_COs, mesh_paths, cam_config):
     return imgs, norm_depths
 
 def worker_render_img(i, mesh_path, T_CO, cam_config, imgs_out, depths_out):
-    print("worker", i)
+    #print("worker", i)
     img, norm_depth = render_scene(mesh_path, T_CO, cam_config)
     imgs_out[i,:,:,:] = img
     depths_out[i,:,:] = norm_depth
-    print("worker", i, "finished")
+    #print("worker", i, "finished")
 
 
 def render_batch_parallel(T_COs, mesh_paths, cam_config):
@@ -100,10 +115,13 @@ def render_batch_parallel(T_COs, mesh_paths, cam_config):
         mesh_path = mesh_paths[i]
         T_CO = T_COs[i]
         t = threading.Thread(target=worker_render_img, args=(i,mesh_path,T_CO,cam_config,imgs,norm_depths))
-        threads.append(t)
         t.start()
+        threads.append(t)
     for t in threads:
+        #print("join", t)
         t.join()
+
+    #print(" ### FINISHED ### ")
     return imgs, norm_depths
 
 def sample_verts_to_batch(mesh_paths, num_verts_to_sample):
@@ -161,9 +179,8 @@ if __name__ == '__main__':
     print(scene_config)
     cam_config = config["camera_intrinsics"]
 
-    T_CO_init, T_CO_gt = sample_T_CO_inits_and_gts(32, scene_config)
-    mesh_paths = sample_mesh_paths(32, "ModelNet40-norm-ply", ["airplane"], "train")
-
+    T_CO_init, T_CO_gt = sample_T_CO_inits_and_gts(128, scene_config)
+    mesh_paths = sample_mesh_paths(128, "ModelNet40-norm-ply", ["airplane"], "train")
     
     cur = time.time()
     #render_batch_parallel(T_CO_init, mesh_paths, cam_config)

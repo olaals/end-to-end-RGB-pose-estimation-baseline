@@ -1,5 +1,6 @@
-
 import os
+#os.environ['PYOPENGL_PLATFORM'] = 'osmesa'
+os.environ['PYOPENGL_PLATFORM'] = 'egl'
 import numpy as np
 import spatialmath as sm
 import trimesh as tm
@@ -9,7 +10,6 @@ import pyrender
 from PIL import Image
 from se3_helpers import get_T_CO_init_and_gt
 
-os.environ['PYOPENGL_PLATFORM'] = 'egl'
 
 def get_camera_matrix(intrinsics):
     focal_len = intrinsics["focal_length"]

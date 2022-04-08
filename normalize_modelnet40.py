@@ -16,6 +16,14 @@ def rescale_mesh(mesh):
     transf_mat[:3,:3] = transf_mat[:3, :3]/longest_axis
     mesh.apply_transform(transf_mat)
 
+def decimate_mesh(mesh, ratio):
+    current_faces = len(mesh.faces)
+    new_faces = int(current_faces*ratio)
+    simplified = mesh.simplify_quadratic_decimation(new_faces)
+    return simplified
+
+
+
 def change_extension(filename, new_extension):
     without_ext = os.path.splitext(filename)[0]
     with_new_ext = without_ext+"."+new_extension
@@ -51,6 +59,7 @@ for classname in classes:
             mesh = tm.load(read_file)
             rescale_mesh(mesh)
             center_mesh_to_centroid(mesh)
+            #mesh = decimate_mesh(mesh, 0.3)
             tm.exchange.export.export_mesh(mesh, out_file)
 
 

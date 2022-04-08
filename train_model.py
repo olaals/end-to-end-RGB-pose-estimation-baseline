@@ -146,6 +146,9 @@ def train(config):
         train_iter_policy = train_iter_policy_incremental
     else:
         assert False
+
+    # parallel rendering
+    use_par_render = config["scene_config"]["use_parallel_rendering"]
     
 
     if(opt_name == "adam"):
@@ -197,14 +200,14 @@ def train(config):
         mesh_paths = sample_mesh_paths(batch_size, ds_name, train_classes, "train")
         mesh_verts = sample_verts_to_batch(mesh_paths, num_sample_verts).to(device) 
         cam_mats = get_camera_mat_tensor(cam_intrinsics, batch_size).to(device)
-        gt_imgs,_ = render_batch(T_CO_gt, mesh_paths, cam_intrinsics)
+        gt_imgs,_ = render_batch(T_CO_gt, mesh_paths, cam_intrinsics, use_par_render)
         T_CO_gt = torch.tensor(T_CO_gt).to(device)
 
         T_CO_pred = T_CO_init # current pred is initial
         train_iterations = train_iter_policy(batch_num, policy_argument)
         for j in range(train_iterations):
             optimizer.zero_grad()
-            pred_imgs, norm_depth = render_batch(T_CO_pred, mesh_paths, cam_intrinsics)
+            pred_imgs, norm_depth = render_batch(T_CO_pred, mesh_paths, cam_intrinsics, use_par_render)
             model_input = prepare_model_input(pred_imgs, gt_imgs, norm_depth, use_norm_depth).to(device)
             T_CO_pred = torch.tensor(T_CO_pred).to(device)
             model_output = model(model_input)

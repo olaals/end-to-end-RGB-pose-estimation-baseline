@@ -41,6 +41,7 @@ def visualize_examples(config, train_or_test, show_fig=False, save_fig=False, sa
     model_name = config["network"]["backend_network"]
     rot_repr = config["network"]["rotation_representation"]
     use_norm_depth = config["advanced"]["use_normalized_depth"]
+    use_par_render = config["scene_config"]["use_parallel_rendering"]
 
     if train_or_test == "train":
         classes = config["train_params"]["train_classes"]
@@ -61,9 +62,10 @@ def visualize_examples(config, train_or_test, show_fig=False, save_fig=False, sa
 
     T_CO_init, T_CO_gt = sample_T_CO_inits_and_gts(batch_size, scene_config)
     mesh_paths = sample_mesh_paths(batch_size, ds_name, classes, train_or_test)
-    init_imgs, norm_depth = render_batch(T_CO_init, mesh_paths, cam_intrinsics)
+    print(mesh_paths)
+    init_imgs, norm_depth = render_batch(T_CO_init, mesh_paths, cam_intrinsics, use_par_render)
     #if not use_norm_depth: norm_depth=None
-    gt_imgs, _ = render_batch(T_CO_gt, mesh_paths, cam_intrinsics)
+    gt_imgs, _ = render_batch(T_CO_gt, mesh_paths, cam_intrinsics, use_par_render)
 
     T_CO_pred = T_CO_init
     pred_imgs = init_imgs
@@ -79,7 +81,7 @@ def visualize_examples(config, train_or_test, show_fig=False, save_fig=False, sa
             model_output = model(model_input)
             T_CO_pred = calculate_T_CO_pred(model_output, T_CO_pred, rot_repr, cam_mats)
             T_CO_pred = T_CO_pred.detach().cpu().numpy()
-            pred_imgs, norm_depth = render_batch(T_CO_pred, mesh_paths, cam_intrinsics)
+            pred_imgs, norm_depth = render_batch(T_CO_pred, mesh_paths, cam_intrinsics, use_par_render)
             if not use_norm_depth: norm_depth=None
             
             pred_imgs_sequence.append(pred_imgs)

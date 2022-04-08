@@ -69,6 +69,7 @@ def evaluate_model(model, config, test_or_train_ds, use_all_examples=True, max_e
     num_train_batches = config["train_params"]["num_batches_to_train"]
     num_sample_verts = config["train_params"]["num_sample_vertices"]
     device = config["train_params"]["device"]
+    use_par_render = config["scene_config"]["use_parallel_rendering"]
 
     test_iterations_per_class= config["test_config"]["iterations_per_class"]
     test_predict_iterations = config["test_config"]["predict_iterations"]
@@ -95,12 +96,12 @@ def evaluate_model(model, config, test_or_train_ds, use_all_examples=True, max_e
                     T_CO_init, T_CO_gt = sample_T_CO_inits_and_gts(actual_bsz, scene_config)
                     mesh_verts = sample_verts_to_batch(mesh_paths, num_sample_verts).to(device)
                     cam_mats = get_camera_mat_tensor(cam_intrinsics, actual_bsz).to(device)
-                    gt_imgs,_ = render_batch(T_CO_gt, mesh_paths, cam_intrinsics)
+                    gt_imgs,_ = render_batch(T_CO_gt, mesh_paths, cam_intrinsics, use_par_render)
                     T_CO_gt = torch.tensor(T_CO_gt).to(device)
                     T_CO_pred = T_CO_init # current pred is initial
                     seen_train_ex += actual_bsz
                     for pred_iter in range(test_predict_iterations):
-                        pred_imgs, norm_depth = render_batch(T_CO_pred, mesh_paths, cam_intrinsics)
+                        pred_imgs, norm_depth = render_batch(T_CO_pred, mesh_paths, cam_intrinsics, use_par_render)
                         model_input = prepare_model_input(pred_imgs, gt_imgs, norm_depth, use_norm_depth).to(device)
                         T_CO_pred = torch.tensor(T_CO_pred).to(device)
                         model_output = model(model_input)
