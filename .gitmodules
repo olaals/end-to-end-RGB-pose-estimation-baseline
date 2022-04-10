@@ -1,0 +1,3 @@
+[submodule "datasets-rgb-pose-estimation"]
+	path = datasets-rgb-pose-estimation
+	url = https://github.com/olaals/datasets-rgb-pose-estimation
