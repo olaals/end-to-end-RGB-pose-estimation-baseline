@@ -1,6 +1,4 @@
 import torch
-import pytorch3d as pt3d
-from pytorch3d import transforms as pt3dtf
 import math
 
 def compute_rotation_matrix_from_ortho6d(poses):

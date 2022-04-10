@@ -29,7 +29,7 @@ def get_config():
             "optimizer":"adam",
             "loss": "add_l1",
             "num_sample_vertices": 1000,  # number of vertices sampled from the mesh, used in calculating the loss
-            "device": "cuda", # cuda or cpu 
+            "device": "cpu", # cuda or cpu 
             "dataset_name": "ModelNet40-norm-ply",
         },
         "network":{

@@ -6,7 +6,7 @@ from rotation_representation import calculate_T_CO_pred
 #from models.efficient_net import 
 from models import fetch_network
 import os
-from config_parser import get_dict_from_cli
+from parser_config import get_dict_from_cli
 import pickle
 import matplotlib.pyplot as plt
 from visualization import visualize_examples

@@ -5,7 +5,7 @@ from rotation_representation import calculate_T_CO_pred
 #from models.efficient_net import 
 from models import fetch_network
 import os
-from config_parser import get_dict_from_cli
+from parser_config import get_dict_from_cli
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
