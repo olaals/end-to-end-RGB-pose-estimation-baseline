@@ -266,10 +266,7 @@ def train_iter_policy_incremental(current_batch, increments_tuple_list):
 
 
 if __name__ == '__main__':
-    try:
-        config = get_dict_from_cli()
-    except:
-        raise Exception("Include a valid config file with: ".upper()+"python train_model.py baseline_cfg")
+    config = get_dict_from_cli()
     train(config)
 
     

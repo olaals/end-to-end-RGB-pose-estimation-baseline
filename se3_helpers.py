@@ -25,6 +25,10 @@ def look_at_SE3(origin, target, up):
     se3_sm = sm.SE3.Rt(so3_sm, origin)
     return se3_sm
 
+def get_random_z_rot():
+    z_rot = np.random.uniform(0.0, 180.0)
+    T_zrot = sm.SE3.Rz(z_rot, unit='deg')
+    return T_zrot
 
 def get_random_unit_axis():
     # not perfectly random, as points are sampled uniformly in a cube then normalized to unit length
