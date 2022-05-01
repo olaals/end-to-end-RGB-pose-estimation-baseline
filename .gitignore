@@ -2,6 +2,7 @@ ModelNet40-norm-ply
 *.pth
 logdir/*/*
 tensorboard/*/*
+img-datasets/*/*
 
 
 # Byte-compiled / optimized / DLL files
