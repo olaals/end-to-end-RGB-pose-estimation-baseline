@@ -19,7 +19,7 @@ class EffNetB3(nn.Module):
 
 if __name__ == '__main__':
     model = EffNetB3(6,9)
-    tens = torch.randn((8,6,300,300))
+    tens = torch.randn((8,6,320,320))
     out = model(tens)
     print(out.shape)
 

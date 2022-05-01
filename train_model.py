@@ -1,6 +1,7 @@
 #from models.baseline_net import BaseNet
 import torch 
 from data_loaders import *
+from image_dataloaders import get_dataloaders
 from loss import compute_ADD_L1_loss, compute_disentangled_ADD_L1_loss, compute_scaled_disentl_ADD_L1_loss
 from rotation_representation import calculate_T_CO_pred
 #from models.efficient_net import 
@@ -106,8 +107,15 @@ def logging(model, config, writer, log_dict, logdir, batch_num, train_examples):
 def train(config):
     scene_config = config["scene_config"]
 
-    ds_name = config["train_params"]["dataset_name"]
-    train_classes = config["train_params"]["train_classes"]
+    # dataset config
+    model3d_dataset = config["dataset_config"]["model3d_dataset"]
+    train_classes = config["dataset_config"]["train_classes"]
+    train_from_imgs = config["dataset_config"]["train_from_images"]
+    ds_conf = config["dataset_config"]
+    batch_size = config["train_params"]["batch_size"]
+    if train_from_imgs:
+        train_loader, val_loader, test_loader = get_dataloaders(ds_conf, batch_size)
+
 
     # model load parameters
     model_name = config["network"]["backend_network"]
@@ -129,7 +137,6 @@ def train(config):
     model = model.to(device)
 
     #train params
-    batch_size = config["train_params"]["batch_size"]
     learning_rate = config["train_params"]["learning_rate"]
     opt_name = config["train_params"]["optimizer"]
     num_train_batches = config["train_params"]["num_batches_to_train"]
@@ -196,20 +203,32 @@ def train(config):
     batch_num=0
 
     while(True):
-        T_CO_init, T_CO_gt = sample_T_CO_inits_and_gts(batch_size, scene_config)
-        mesh_paths = sample_mesh_paths(batch_size, ds_name, train_classes, "train")
-        mesh_verts = sample_verts_to_batch(mesh_paths, num_sample_verts).to(device) 
-        cam_mats = get_camera_mat_tensor(cam_intrinsics, batch_size).to(device)
-        gt_imgs,_ = render_batch(T_CO_gt, mesh_paths, cam_intrinsics, use_par_render)
-        T_CO_gt = torch.tensor(T_CO_gt).to(device)
+        start_time = time.time()
+        if train_from_imgs:
+            init_imgs, gt_imgs, T_CO_init, T_CO_gt, mesh_verts, mesh_paths = next(iter(train_loader))
+            init_imgs = init_imgs.numpy()
+            gt_imgs = gt_imgs.numpy()
+            T_CO_gt = T_CO_gt.to(device)
+        else:
+            T_CO_init, T_CO_gt = sample_T_CO_inits_and_gts(batch_size, scene_config)
+            mesh_paths = sample_mesh_paths(batch_size, model3d_dataset, train_classes, "train")
+            mesh_verts = sample_verts_to_batch(mesh_paths, num_sample_verts).to(device) 
+            gt_imgs,_ = render_batch(T_CO_gt, mesh_paths, cam_intrinsics, use_par_render)
+            T_CO_gt = torch.tensor(T_CO_gt).to(device)
 
+        cam_mats = get_camera_mat_tensor(cam_intrinsics, batch_size).to(device)
         T_CO_pred = T_CO_init # current pred is initial
         train_iterations = train_iter_policy(batch_num, policy_argument)
         for j in range(train_iterations):
             optimizer.zero_grad()
-            pred_imgs, norm_depth = render_batch(T_CO_pred, mesh_paths, cam_intrinsics, use_par_render)
+            if(j==0 and train_from_imgs):
+                pred_imgs = init_imgs
+                norm_depth = None
+                T_CO_pred = T_CO_pred.to(device)
+            else:
+                pred_imgs, norm_depth = render_batch(T_CO_pred, mesh_paths, cam_intrinsics, use_par_render)
+                T_CO_pred = torch.tensor(T_CO_pred).to(device)
             model_input = prepare_model_input(pred_imgs, gt_imgs, norm_depth, use_norm_depth).to(device)
-            T_CO_pred = torch.tensor(T_CO_pred).to(device)
             model_output = model(model_input)
             T_CO_pred_new = calculate_T_CO_pred(model_output, T_CO_pred, rotation_repr, cam_mats)
             addl1_loss = compute_ADD_L1_loss(T_CO_gt, T_CO_pred_new, mesh_verts)
@@ -226,7 +245,8 @@ def train(config):
             T_CO_pred = T_CO_pred_new.detach().cpu().numpy()
 
             # Printing and logging
-            print(f'ADD L1 loss for train batch {batch_num}, with {new_batch_num} new batches, train iter {j}:', addl1_loss.item())
+            elapsed = time.time() - start_time
+            print(f'ADD L1 loss for train batch {batch_num}, with {new_batch_num} new batches, train iter {j}: {addl1_loss.item():.4f}, batch time: {elapsed:.3f}')
             log_dict["loss"]["add_l1"][batch_num] = addl1_loss.item()
             log_dict["loss"]["train_ex"][batch_num] = train_examples
             logging(model, config, writer, log_dict, logdir, batch_num, train_examples)

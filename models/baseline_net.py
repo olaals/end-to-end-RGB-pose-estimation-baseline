@@ -10,7 +10,7 @@ class BaseNet(nn.Module):
         self.cnn_block3 = self.cnn_block(48, 64)
         self.cnn_block4 = self.cnn_block(64, 64)
         self.cnn_block5 = self.cnn_block(64, 32)
-        self.linear = nn.Linear(2592, out_features)
+        self.linear = nn.Linear(3200, out_features)
 
     def cnn_block(self,in_channels, out_channels):
         return nn.Sequential(
@@ -35,7 +35,7 @@ class BaseNet(nn.Module):
 
 if __name__ == '__main__':
     model = BaseNet(6, 9)
-    tens = torch.randn(8, 6, 300, 300) # batch_size: 8, img_channels 6 (3+3), res_x, res_y
+    tens = torch.randn(8, 6, 320, 320) # batch_size: 8, img_channels 6 (3+3), res_x, res_y
     out = model(tens)
     print(out.shape) # [8,9]
 

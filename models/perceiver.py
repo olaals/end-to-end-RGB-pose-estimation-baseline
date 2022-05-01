@@ -44,7 +44,7 @@ class Perceiver(nn.Module):
 
 
 if __name__ == '__main__':
-    tens = torch.randn((1,6,300,300))
+    tens = torch.randn((1,6,320,320))
     model = Perceiver(6, 9)
 
     out=model(tens)

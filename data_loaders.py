@@ -31,7 +31,7 @@ def sample_vertices_as_tensor(mesh_path, num_verts=1000):
     return tensor_verts
 
 def get_dataset_class_paths(dataset_name, classname, test_or_train):
-    data_dir = os.path.join(dataset_name, classname, test_or_train)
+    data_dir = os.path.join("model3d-datasets",dataset_name, classname, test_or_train)
     model_paths = [os.path.join(data_dir, filename) for filename in os.listdir(data_dir)]
     return model_paths
 

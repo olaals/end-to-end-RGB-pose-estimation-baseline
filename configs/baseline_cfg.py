@@ -23,14 +23,22 @@ def get_config():
         "config_name":this_file_name,
         "train_params":{
             "batch_size":8,
-            "train_classes": ["airplane"], # all_classes or specify indivudal as ["desk", "sofa", "plant"]
             "learning_rate": 3e-4, 
             "num_batches_to_train": 100000, # stop training after N batches
             "optimizer":"adam",
             "loss": "add_l1",
             "num_sample_vertices": 1000,  # number of vertices sampled from the mesh, used in calculating the loss
             "device": "cpu", # cuda or cpu 
-            "dataset_name": "ModelNet40-norm-ply",
+        },
+        "dataset_config":{
+            "train_from_images": False,
+            "train_classes": ["chair"], # all_classes or specify indivudal as ["desk", "sofa", "plant"]
+            "model3d_dataset": "ModelNet10-norm-clean-ply",
+            "img_dataset": "MN10-alu-1k",
+            "img_ds_conf":{
+                "real": "real.png",
+                "init": "init.png"
+            },
         },
         "network":{
             "backend_network": backend_network,
@@ -39,14 +47,14 @@ def get_config():
         "camera_intrinsics":{
             "focal_length": 50, #mm
             "sensor_width": 36, #mm
-            "image_resolution": 300, # width=height
+            "image_resolution": 320, # width=height
         },
         "scene_config":{
-            "distance_cam_to_world": 1.8, #meters
+            "distance_cam_to_world": 2.5, #meters
             "distance_cam_to_world_deviation":0.1, #meters
             "world_to_object_gt_transl_deviation": 0.1, #meters
             "world_to_object_transl_deviation": 0.1, #meters
-            "world_to_object_angle_deviation":25, #degrees
+            "world_to_object_angle_deviation":30, #degrees
             "use_parallel_rendering":False,
         },
         "model_io":{
