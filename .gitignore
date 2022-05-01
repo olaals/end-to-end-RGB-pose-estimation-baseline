@@ -3,6 +3,7 @@ ModelNet40-norm-ply
 logdir/*/*
 tensorboard/*/*
 img-datasets/*/*
+model3d-datasets/*/*
 
 
 # Byte-compiled / optimized / DLL files
