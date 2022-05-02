@@ -50,9 +50,9 @@ def evaluate_model(model, config, test_or_train_ds, use_all_examples=True, max_e
     use_norm_depth = config["advanced"]["use_normalized_depth"]
     rotation_repr = config["network"]["rotation_representation"]
 
-    ds_name = config["train_params"]["dataset_name"]
+    ds_name = config["dataset_config"]["model3d_dataset"]
     if(test_or_train_ds == 'train'):
-        classes = config["train_params"]["train_classes"]
+        classes = config["dataset_config"]["train_classes"]
     elif(test_or_train_ds == 'test'):
         classes = config["test_config"]["test_classes"]
     else:

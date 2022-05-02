@@ -66,9 +66,9 @@ def get_config():
         },
         "logging":{
             "logdir": os.path.join("logdir", this_file_name),
-            "save_visualization_at_batches": [100, 500, 1000, 2000, 5000, 10000, 20000, 30000, 40000, 50000, 70000, 90000],
+            "save_visualization_at_batches": [20, 100, 500, 1000, 2000, 5000, 10000, 20000, 30000, 40000, 50000, 70000, 90000],
             "log_save_interval":10,
-            "validation_interval":500,
+            "validation_interval":50,
             "val_examples_from_each_class":8,
         },
         "test_config":{
