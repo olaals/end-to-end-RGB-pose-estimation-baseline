@@ -209,6 +209,7 @@ def train(config):
             init_imgs = init_imgs.numpy()
             gt_imgs = gt_imgs.numpy()
             T_CO_gt = T_CO_gt.to(device)
+            mesh_verts = mesh_verts.to(device)
         else:
             T_CO_init, T_CO_gt = sample_T_CO_inits_and_gts(batch_size, scene_config)
             mesh_paths = sample_mesh_paths(batch_size, model3d_dataset, train_classes, "train")

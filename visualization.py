@@ -28,11 +28,11 @@ def visualize_examples(config, train_or_test, show_fig=False, save_fig=False, sa
     assert (train_or_test=="test" or train_or_test=="train")
 
     batch_size = 5
-    device = 'cpu'
+    device = config["train_params"]["device"]
     iter_num = 5
 
     scene_config = config["scene_config"]
-    ds_name = config["train_params"]["dataset_name"]
+    ds_name = config["dataset_config"]["model3d_dataset"]
     cam_intrinsics = config["camera_intrinsics"]
     model_load_dir = config["test_config"]["model_load_dir"]
     model_load_name = config["test_config"]["model_load_name"]

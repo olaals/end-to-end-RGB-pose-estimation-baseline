@@ -28,10 +28,10 @@ def get_config():
             "optimizer":"adam",
             "loss": "add_l1",
             "num_sample_vertices": 1000,  # number of vertices sampled from the mesh, used in calculating the loss
-            "device": "cpu", # cuda or cpu 
+            "device": "cuda", # cuda or cpu 
         },
         "dataset_config":{
-            "train_from_images": False,
+            "train_from_images": True,
             "train_classes": ["chair"], # all_classes or specify indivudal as ["desk", "sofa", "plant"]
             "model3d_dataset": "ModelNet10-norm-clean-ply",
             "img_dataset": "MN10-alu-1k",
