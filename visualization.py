@@ -94,7 +94,7 @@ def create_rgb_overlapped_image_fig(init_imgs, gt_imgs, pred_imgs_sequence, save
     if save_fig:
         plt.savefig(save_path)
 
-def visualize_examples(config, train_or_test, show_fig=False, save_fig=False, save_path=""):
+def visualize_examples(model, config, train_or_test, show_fig=False, save_fig=False, save_path=""):
     assert (train_or_test=="test" or train_or_test=="train")
 
     batch_size = 5
@@ -121,9 +121,9 @@ def visualize_examples(config, train_or_test, show_fig=False, save_fig=False, sa
 
     print("Loading pretrained network", model_load_name)
     print("Visualization for classes", classes, "from dataset", train_or_test)
-    model = fetch_network(model_name, rot_repr, use_norm_depth, use_pretrained=True, pretrained_path=model_load_path)
+    #model = fetch_network(model_name, rot_repr, use_norm_depth, use_pretrained=True, pretrained_path=model_load_path)
     model.eval()
-    model = model.to(device)
+    #model = model.to(device)
 
     
     train_from_imgs = config["dataset_config"]["train_from_images"]

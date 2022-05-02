@@ -1,11 +1,12 @@
 import torch
 import os
 
-
 all_classes_modelnet40 = ["airplane", "bench", "bowl", "cone", "desk", "flower_pot", "keyboard", "mantel", "person", "radio",
                           "sofa", "table", "tv_stand", "xbox", "bathtub", "bookshelf", "car", "cup", "door", "glass_box",
                           "lamp", "monitor", "piano", "range_hood", "stairs", "tent", "vase", "bed", "bottle", "chair", "curtain",
                           "dresser", "guitar", "laptop", "night_stand", "plant", "sink", "stool", "toilet", "wardrobe"]
+
+all_classes_modelnet10 = ["bathtub", "bed", "chair", "desk", "dresser", "monitor", "night_stand", "sofa", "table","toilet"]
 
 
 def get_config():
@@ -22,7 +23,7 @@ def get_config():
     return {
         "config_name":this_file_name,
         "train_params":{
-            "batch_size":8,
+            "batch_size":16,
             "learning_rate": 3e-4, 
             "num_batches_to_train": 100000, # stop training after N batches
             "optimizer":"adam",
@@ -32,9 +33,9 @@ def get_config():
         },
         "dataset_config":{
             "train_from_images": True,
-            "train_classes": ["chair"], # all_classes or specify indivudal as ["desk", "sofa", "plant"]
+            "train_classes": all_classes_modelnet10, # all_classes or specify indivudal as ["desk", "sofa", "plant"]
             "model3d_dataset": "ModelNet10-norm-clean-ply",
-            "img_dataset": "MN10-alu-1k",
+            "img_dataset": "MN10-alu-30k",
             "img_ds_conf":{
                 "real": "real.png",
                 "init": "init.png"
@@ -62,13 +63,13 @@ def get_config():
             "pretrained_model_name": "baseline_cfg-baseline-SVD.pth", # load predtrained model, if use_pretrained_model = True
             "model_save_dir": os.path.join("models", "saved-models"),
             "model_save_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
-            "batch_model_save_interval": 25,  # save model during tranining after every N batch trained
+            "batch_model_save_interval": 500,  # save model during tranining after every N batch trained
         },
         "logging":{
             "logdir": os.path.join("logdir", this_file_name),
-            "save_visualization_at_batches": [20, 100, 500, 1000, 2000, 5000, 10000, 20000, 30000, 40000, 50000, 70000, 90000],
-            "log_save_interval":10,
-            "validation_interval":50,
+            "save_visualization_at_batches": [100, 500, 1000, 2000, 5000, 10000, 20000, 30000, 40000, 50000, 70000, 90000],
+            "log_save_interval":50,
+            "validation_interval":2000,
             "val_examples_from_each_class":8,
         },
         "test_config":{
@@ -77,7 +78,7 @@ def get_config():
             "iterations_per_class": 1,
             "model_load_dir": os.path.join("models", "saved-models"),
             "model_load_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
-            "test_classes": ["airplane"],
+            "test_classes": all_classes_modelnet10,
         },
         "advanced":{
             "use_normalized_depth": False, # use a normalized rendered depth in the model input

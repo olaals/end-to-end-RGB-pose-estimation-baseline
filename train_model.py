@@ -11,7 +11,7 @@ from parser_config import get_dict_from_cli
 import pickle
 import matplotlib.pyplot as plt
 from visualization import visualize_examples
-from test_model import evaluate_model
+from test_model import evaluate_model, validate_model
 from torch.utils.tensorboard import SummaryWriter
 import time
 import datetime
@@ -81,13 +81,14 @@ def logging(model, config, writer, log_dict, logdir, batch_num, train_examples):
         viz_dir = os.path.join(logdir, "visualizations")
         os.makedirs(viz_dir, exist_ok=True)
         viz_save_path  = os.path.join(viz_dir, "viz-at-train-ex-"+str(train_examples)+".png")
-        visualize_examples(config, "train", show_fig=False, save_fig=True, save_path=viz_save_path)
+        visualize_examples(model, config, "train", show_fig=False, save_fig=True, save_path=viz_save_path)
 
     validation_interval = config["logging"]["validation_interval"]
     if(batch_num%validation_interval == 0 and batch_num != 0):
         val_ex = config["logging"]["val_examples_from_each_class"]
-        loss_dict, mean_losses = evaluate_model(model, config, "train", use_all_examples=False, max_examples_from_each_class=val_ex)
-        log_dict["val_loss_dicts"].append((train_examples, loss_dict))
+        #loss_dict, mean_losses = evaluate_model(model, config, "train", use_all_examples=False, max_examples_from_each_class=val_ex)
+        mean_losses = validate_model(model, config)
+        #log_dict["val_loss_dicts"].append((train_examples, loss_dict))
         log_dict["val_loss"].append((train_examples, mean_losses))
         pickle_log_dict(log_dict, logdir)
         save_plot_validation_loss(log_dict["val_loss"], logdir, "ADD L1 loss")

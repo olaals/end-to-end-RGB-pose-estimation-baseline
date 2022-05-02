@@ -1,5 +1,6 @@
 import torch
 from data_loaders import *
+from image_dataloaders import get_dataloaders
 from loss import compute_ADD_L1_loss, compute_disentangled_ADD_L1_loss
 from rotation_representation import calculate_T_CO_pred
 #from models.efficient_net import 
@@ -40,6 +41,74 @@ def save_loss_bar_plot(loss_dict, logdir):
     sb.barplot(x='x', y='y', hue="group", data=sb_dict)
     save_path = os.path.join(logdir, "barplot.png")
     plt.savefig(save_path)
+
+
+
+def validate_model(model, config, val_or_test):
+    print("Validating Model")
+    model.eval()
+    scene_config = config["scene_config"]
+    use_norm_depth = config["advanced"]["use_normalized_depth"]
+    rotation_repr = config["network"]["rotation_representation"]
+
+    ds_name = config["dataset_config"]["model3d_dataset"]
+    classes = config["test_config"]["test_classes"]
+
+
+    cam_intrinsics = config["camera_intrinsics"]
+    device = config["train_params"]["device"]
+    model = model.to(device)
+
+    #test params
+    batch_size = config["test_config"]["batch_size"]
+    num_train_batches = config["train_params"]["num_batches_to_train"]
+    num_sample_verts = config["train_params"]["num_sample_vertices"]
+    device = config["train_params"]["device"]
+    use_par_render = config["scene_config"]["use_parallel_rendering"]
+
+    test_iterations_per_class= config["test_config"]["iterations_per_class"]
+    test_predict_iterations = config["test_config"]["predict_iterations"]
+
+    ds_conf = config["dataset_config"]
+    _,val_loader,test_loader = get_dataloaders(ds_conf, batch_size)
+    if val_or_test == 'val':
+        data_loader = val_loader
+    elif val_or_test =='test':
+        data_loader = test_loader
+    print("Batch size", batch_size)
+    print(f'Validating on device', device)
+    print("on classes \n", classes)
+    results = np.zeros((test_predict_iterations, len(data_loader.dataset)))
+    examples = 0
+    with torch.no_grad():
+        for i, (init_imgs, gt_imgs, T_CO_init, T_CO_gt, mesh_verts, mesh_paths) in enumerate(data_loader):
+            bsz = len(T_CO_init)
+            cam_mats = get_camera_mat_tensor(cam_intrinsics, bsz).to(device)
+            T_CO_pred = T_CO_init
+            gt_imgs = gt_imgs.numpy()
+            mesh_verts = mesh_verts.to(device)
+            T_CO_gt = T_CO_gt.to(device)
+
+            for j in range(test_predict_iterations):
+                if(j==0):
+                    pred_imgs = init_imgs.numpy()
+                    norm_depth = None
+                    T_CO_pred = T_CO_pred.to(device)
+                else:
+                    pred_imgs, norm_depth = render_batch(T_CO_pred, mesh_paths, cam_intrinsics, use_par_render)
+                    T_CO_pred = torch.tensor(T_CO_pred).to(device)
+                model_input = prepare_model_input(pred_imgs, gt_imgs, norm_depth, use_norm_depth).to(device)
+                model_output = model(model_input)
+                T_CO_pred_new = calculate_T_CO_pred(model_output, T_CO_pred, rotation_repr, cam_mats)
+                addl1_loss = compute_ADD_L1_loss(T_CO_gt, T_CO_pred_new, mesh_verts, use_batch_mean=False)
+                addl1_loss = addl1_loss.detach().cpu().numpy()
+                T_CO_pred = T_CO_pred_new.detach().cpu().numpy()
+                results[j][examples:(examples+bsz)] = addl1_loss
+            examples += bsz
+    return np.mean(results,axis=1)
+
+
+        
 
 
 
@@ -161,8 +230,7 @@ if __name__ == '__main__':
         print("")
         print(" ### TESTING IS STARTING ### ")
         print("Loading backend network", model_name.upper(), "with rotation representation", rotation_repr)
-        loss_dict,mean_loss = evaluate_model(model, config, "test", False, 10)
-        print(loss_dict)
+        mean_loss = validate_model(model, config, "test")
         print("Mean loss", mean_loss)
         #save_loss_bar_plot(loss_dict, logdir)
     except:

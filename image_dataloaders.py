@@ -70,7 +70,7 @@ def get_dataloaders(ds_conf, batch_size):
     val_ds = ImagePoseDataset("validation", ds_conf)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
     test_ds = ImagePoseDataset("test", ds_conf)
-    test_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False)
     return train_loader, val_loader, test_loader
 
 
