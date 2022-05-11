@@ -77,7 +77,8 @@ def logging(model, config, writer, log_dict, logdir, batch_num, train_examples):
         pickle_log_dict(log_dict, logdir)
     
     save_viz_batches = config["logging"]["save_visualization_at_batches"]
-    if batch_num in save_viz_batches:
+    save_viz_every_n_batch = config["logging"]["save_viz_every_n_batch"]
+    if((batch_num in save_viz_batches) or (batch_num%save_viz_every_n_batch==0 and batch_num!=0)):
         viz_dir = os.path.join(logdir, "visualizations")
         os.makedirs(viz_dir, exist_ok=True)
         viz_save_path  = os.path.join(viz_dir, "viz-at-train-ex-"+str(train_examples)+".png")
@@ -87,7 +88,7 @@ def logging(model, config, writer, log_dict, logdir, batch_num, train_examples):
     if(batch_num%validation_interval == 0 and batch_num != 0):
         val_ex = config["logging"]["val_examples_from_each_class"]
         #loss_dict, mean_losses = evaluate_model(model, config, "train", use_all_examples=False, max_examples_from_each_class=val_ex)
-        mean_losses = validate_model(model, config)
+        mean_losses = validate_model(model, config, "val")
         #log_dict["val_loss_dicts"].append((train_examples, loss_dict))
         log_dict["val_loss"].append((train_examples, mean_losses))
         pickle_log_dict(log_dict, logdir)

@@ -45,6 +45,7 @@ def add_camera(scene, T_CO, K):
 def render(scene, img_size):
     r = pyrender.OffscreenRenderer(img_size, img_size)
     color, depth = r.render(scene)
+    r.delete()
     return color/255.0, depth
 
 

@@ -25,7 +25,7 @@ def get_config():
         "train_params":{
             "batch_size":16,
             "learning_rate": 3e-4, 
-            "num_batches_to_train": 100000, # stop training after N batches
+            "num_batches_to_train": 200000, # stop training after N batches
             "optimizer":"adam",
             "loss": "add_l1",
             "num_sample_vertices": 1000,  # number of vertices sampled from the mesh, used in calculating the loss
@@ -67,9 +67,10 @@ def get_config():
         },
         "logging":{
             "logdir": os.path.join("logdir", this_file_name),
-            "save_visualization_at_batches": [100, 500, 1000, 2000, 5000, 10000, 20000, 30000, 40000, 50000, 70000, 90000],
+            "save_viz_every_n_batch": 5000,
+            "save_visualization_at_batches": [100, 500, 1000, 2000],
             "log_save_interval":50,
-            "validation_interval":2000,
+            "validation_interval":1000,
             "val_examples_from_each_class":8,
         },
         "test_config":{
@@ -82,8 +83,8 @@ def get_config():
         },
         "advanced":{
             "use_normalized_depth": False, # use a normalized rendered depth in the model input
-            "train_iter_policy": "constant", # constant or incremental
-            "train_iter_policy_argument": 1, # if train_iter_policy is constant use a number i.e. 3, if incremental use tuple list [(100,2),(1000,3)]
+            "train_iter_policy": "incremental", # constant or incremental
+            "train_iter_policy_argument": [(150000,2),(180000,3)], # if train_iter_policy is constant use a number i.e. 3, if incremental use tuple list [(100,2),(1000,3)]
         },
 
 
