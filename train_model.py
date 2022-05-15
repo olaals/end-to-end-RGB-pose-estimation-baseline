@@ -79,10 +79,10 @@ def logging(model, config, writer, log_dict, logdir, batch_num, train_examples):
     save_viz_batches = config["logging"]["save_visualization_at_batches"]
     save_viz_every_n_batch = config["logging"]["save_viz_every_n_batch"]
     if((batch_num in save_viz_batches) or (batch_num%save_viz_every_n_batch==0 and batch_num!=0)):
-        viz_dir = os.path.join(logdir, "visualizations")
-        os.makedirs(viz_dir, exist_ok=True)
-        viz_save_path  = os.path.join(viz_dir, "viz-at-train-ex-"+str(train_examples)+".png")
-        visualize_examples(model, config, "train", show_fig=False, save_fig=True, save_path=viz_save_path)
+        save_dir = os.path.join(logdir, "visualizations")
+        os.makedirs(save_dir, exist_ok=True)
+        visualize_examples(model, config, "train", show_fig=False, save_dir=save_dir, n_train_examples=train_examples)
+        visualize_examples(model, config, "val", show_fig=False, save_dir=save_dir, n_train_examples=train_examples)
 
     validation_interval = config["logging"]["validation_interval"]
     if(batch_num%validation_interval == 0 and batch_num != 0):
