@@ -81,7 +81,8 @@ def validate_model(model, config, val_or_test):
     results = np.zeros((test_predict_iterations, len(data_loader.dataset)))
     examples = 0
     with torch.no_grad():
-        for i, (init_imgs, gt_imgs, T_CO_init, T_CO_gt, mesh_verts, mesh_paths) in enumerate(data_loader):
+        for i, (init_imgs, gt_imgs, T_CO_init, T_CO_gt, mesh_verts, mesh_paths, depths) in enumerate(data_loader):
+            depths = depths.numpy()
             bsz = len(T_CO_init)
             cam_mats = get_camera_mat_tensor(cam_intrinsics, bsz).to(device)
             T_CO_pred = T_CO_init
@@ -92,12 +93,11 @@ def validate_model(model, config, val_or_test):
             for j in range(test_predict_iterations):
                 if(j==0):
                     pred_imgs = init_imgs.numpy()
-                    norm_depth = None
                     T_CO_pred = T_CO_pred.to(device)
                 else:
                     pred_imgs, norm_depth = render_batch(T_CO_pred, mesh_paths, cam_intrinsics, use_par_render)
                     T_CO_pred = torch.tensor(T_CO_pred).to(device)
-                model_input = prepare_model_input(pred_imgs, gt_imgs, norm_depth, use_norm_depth).to(device)
+                model_input = prepare_model_input(pred_imgs, gt_imgs, depths, use_norm_depth).to(device)
                 model_output = model(model_input)
                 T_CO_pred_new = calculate_T_CO_pred(model_output, T_CO_pred, rotation_repr, cam_mats)
                 addl1_loss = compute_ADD_L1_loss(T_CO_gt, T_CO_pred_new, mesh_verts, use_batch_mean=False)

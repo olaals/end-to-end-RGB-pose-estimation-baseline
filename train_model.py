@@ -15,6 +15,7 @@ from test_model import evaluate_model, validate_model
 from torch.utils.tensorboard import SummaryWriter
 import time
 import datetime
+torch.autograd.set_detect_anomaly(True)
 
 def pickle_log_dict(log_dict, logdir):
     save_path = os.path.join(logdir, "log_dict.pkl")
@@ -207,11 +208,13 @@ def train(config):
     while(True):
         start_time = time.time()
         if train_from_imgs:
-            init_imgs, gt_imgs, T_CO_init, T_CO_gt, mesh_verts, mesh_paths = next(iter(train_loader))
+            init_imgs, gt_imgs, T_CO_init, T_CO_gt, mesh_verts, mesh_paths, depths = next(iter(train_loader))
             init_imgs = init_imgs.numpy()
             gt_imgs = gt_imgs.numpy()
+            depths = depths.numpy()
             T_CO_gt = T_CO_gt.to(device)
             mesh_verts = mesh_verts.to(device)
+
         else:
             T_CO_init, T_CO_gt = sample_T_CO_inits_and_gts(batch_size, scene_config)
             mesh_paths = sample_mesh_paths(batch_size, model3d_dataset, train_classes, "train")
@@ -226,23 +229,15 @@ def train(config):
             optimizer.zero_grad()
             if(j==0 and train_from_imgs):
                 pred_imgs = init_imgs
-                norm_depth = None
                 T_CO_pred = T_CO_pred.to(device)
             else:
-                pred_imgs, norm_depth = render_batch(T_CO_pred, mesh_paths, cam_intrinsics, use_par_render)
+                pred_imgs, depths = render_batch(T_CO_pred, mesh_paths, cam_intrinsics, use_par_render)
                 T_CO_pred = torch.tensor(T_CO_pred).to(device)
-            model_input = prepare_model_input(pred_imgs, gt_imgs, norm_depth, use_norm_depth).to(device)
+            model_input = prepare_model_input(pred_imgs, gt_imgs, depths, use_norm_depth).to(device)
             model_output = model(model_input)
             T_CO_pred_new = calculate_T_CO_pred(model_output, T_CO_pred, rotation_repr, cam_mats)
             addl1_loss = compute_ADD_L1_loss(T_CO_gt, T_CO_pred_new, mesh_verts)
-            if loss_fn_name == "add_l1":
-                addl1_loss.backward()
-            elif loss_fn_name == "add_l1_disentangled":
-                disentl_loss = compute_disentangled_ADD_L1_loss(T_CO_gt, T_CO_pred_new, mesh_verts)
-                disentl_loss.backward()
-            elif loss_fn_name == "add_l1_disentl_scaled":
-                sc_disentl_loss = compute_scaled_disentl_ADD_L1_loss(T_CO_pred, T_CO_pred_new, T_CO_gt, mesh_verts)
-                sc_disentl_loss.backward()
+            loss_handler(loss_fn_name, addl1_loss, T_CO_pred_new, T_CO_pred, T_CO_gt, mesh_verts)
 
             optimizer.step()
             T_CO_pred = T_CO_pred_new.detach().cpu().numpy()
@@ -253,9 +248,9 @@ def train(config):
             log_dict["loss"]["add_l1"][batch_num] = addl1_loss.item()
             log_dict["loss"]["train_ex"][batch_num] = train_examples
             logging(model, config, writer, log_dict, logdir, batch_num, train_examples)
-            writer.add_scalar("ADD_L1_loss", addl1_loss.item(), train_examples)
 
             if batch_num != 0 and batch_num%save_every_n_batch == 0:
+                writer.add_scalar("ADD_L1_loss", addl1_loss.item(), train_examples)
                 perc_complete = (batch_num*1.0)/num_train_batches
                 print("Saving model to", model_save_path)
                 print(f'Trained {batch_num} of {num_train_batches}. Training {(perc_complete*100.0):.3f} % complete.')
@@ -272,6 +267,15 @@ def train(config):
     END TRAIN LOOP
     """
 
+def loss_handler(loss_fn_name, addl1_loss, T_CO_pred_new, T_CO_pred, T_CO_gt, mesh_verts):
+    if loss_fn_name == "add_l1":
+        addl1_loss.backward()
+    elif loss_fn_name == "add_l1_disentangled":
+        disentl_loss = compute_disentangled_ADD_L1_loss(T_CO_gt, T_CO_pred_new, mesh_verts)
+        disentl_loss.backward()
+    elif loss_fn_name == "add_l1_disentl_scaled":
+        sc_disentl_loss = compute_scaled_disentl_ADD_L1_loss(T_CO_pred, T_CO_pred_new, T_CO_gt, mesh_verts)
+        sc_disentl_loss.backward()
 
 def train_iter_policy_constant(current_batch, num):
     return num

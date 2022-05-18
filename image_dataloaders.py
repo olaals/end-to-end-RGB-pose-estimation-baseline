@@ -59,10 +59,11 @@ class ImagePoseDataset(Dataset):
         verts = np.load(os.path.join(self.all_paths[idx], "vertices.npy"))
         T_CO_gt = np.load(os.path.join(self.all_paths[idx], "T_CO_gt.npy"))
         T_CO_init = np.load(os.path.join(self.all_paths[idx], "T_CO_init.npy"))
+        depth_pass = np.load(os.path.join(self.all_paths[idx], "init_depth.npy"))
         real_img = np.asarray(Image.open(real_path))/255.0
         init_img = np.asarray(Image.open(init_path))/255.0
         mesh_path = get_mesh_path_from_yaml(os.path.join(self.all_paths[idx], "metadata.yml"))
-        return init_img, real_img, T_CO_init, T_CO_gt, verts, mesh_path
+        return init_img, real_img, T_CO_init, T_CO_gt, verts, mesh_path, depth_pass
 
 def get_dataloaders(ds_conf, batch_size):
     train_ds = ImagePoseDataset("train", ds_conf)

@@ -65,6 +65,13 @@ def sample_T_CO_inits_and_gts(batch_size, scene_config):
     T_CO_gts = np.array(T_CO_gts, dtype=np.float32)
     return T_CO_inits, T_CO_gts
 
+def normalize_depth(depth_img):
+    mean_val = np.mean(depth_img[depth_img>0.01])
+    std = np.std(depth_img[depth_img>0.01])
+    normalized = np.where(depth_img>0.01, (depth_img-mean_val)/std, 0.0)
+    return normalized.astype(np.float32)
+
+
 def render_batch(T_COs, mesh_paths, cam_config, parallel_render=False):
 
     now = time.time()
@@ -132,7 +139,7 @@ def sample_verts_to_batch(mesh_paths, num_verts_to_sample):
     verts_batch = torch.stack(verts_batch)
     return verts_batch
 
-def prepare_model_input(init_imgs, gt_imgs, norm_depths, use_norm_depth=False):
+def prepare_model_input(init_imgs, gt_imgs, depths, use_norm_depth=False):
     model_input_batch = []
     for i in range(len(init_imgs)):
         init_img = init_imgs[i]
@@ -142,7 +149,7 @@ def prepare_model_input(init_imgs, gt_imgs, norm_depths, use_norm_depth=False):
         if not use_norm_depth:
             model_input = torch.cat([init_tensor, gt_tensor])
         else:
-            norm_depth = norm_depths[i]
+            norm_depth = normalize_depth(depths[i])
             norm_depth = np.expand_dims(norm_depth, 0)
             norm_depth = torch.tensor(norm_depth)
             model_input = torch.cat([norm_depth, init_tensor, gt_tensor])

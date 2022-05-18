@@ -167,26 +167,23 @@ def visualize_examples(model, config, train_val_or_test, show_fig=False, save_di
     if train_from_imgs:
         train_loader, val_loader, test_loader = get_dataloaders(ds_conf, 5)
         if(train_val_or_test == 'train'):
-            init_imgs, gt_imgs, T_CO_init, T_CO_gt, mesh_verts, mesh_paths = next(iter(train_loader))
+            init_imgs, gt_imgs, T_CO_init, T_CO_gt, mesh_verts, mesh_paths, depths = next(iter(train_loader))
         elif(train_val_or_test == 'val'):
-            init_imgs, gt_imgs, T_CO_init, T_CO_gt, mesh_verts, mesh_paths = next(iter(val_loader))
+            init_imgs, gt_imgs, T_CO_init, T_CO_gt, mesh_verts, mesh_paths, depths = next(iter(val_loader))
         elif(train_val_or_test =='test'):
-            init_imgs, gt_imgs, T_CO_init, T_CO_gt, mesh_verts, mesh_paths = next(iter(test_loader))
+            init_imgs, gt_imgs, T_CO_init, T_CO_gt, mesh_verts, mesh_paths, depths = next(iter(test_loader))
         else:
             assert False
         T_CO_init = T_CO_init.numpy()
         T_CO_gt = T_CO_gt.numpy()
         gt_imgs = gt_imgs.numpy()
         init_imgs = init_imgs.numpy()
-        norm_depth = None
+        depths = depths.numpy()
         gt_imgs_raster, _ = render_batch(T_CO_gt, mesh_paths, cam_intrinsics, use_par_render)
     else:
         T_CO_init, T_CO_gt = sample_T_CO_inits_and_gts(batch_size, scene_config)
         mesh_paths = sample_mesh_paths(batch_size, ds_name, classes, "train")
-        print(mesh_paths)
-        init_imgs, norm_depth = render_batch(T_CO_init, mesh_paths, cam_intrinsics, use_par_render)
-        #if not use_norm_depth: norm_depth=None
-        print(mesh_paths)
+        init_imgs, depths = render_batch(T_CO_init, mesh_paths, cam_intrinsics, use_par_render)
         gt_imgs, _ = render_batch(T_CO_gt, mesh_paths, cam_intrinsics, use_par_render)
 
     T_CO_pred = T_CO_init
@@ -195,7 +192,7 @@ def visualize_examples(model, config, train_val_or_test, show_fig=False, save_di
     T_CO_gt = torch.tensor(T_CO_gt).to(device)
     with torch.no_grad():
         for i in range(iter_num):
-            model_input = prepare_model_input(pred_imgs, gt_imgs, norm_depth, use_norm_depth).to(device)
+            model_input = prepare_model_input(pred_imgs, gt_imgs, depths, use_norm_depth).to(device)
             cam_mats = get_camera_mat_tensor(cam_intrinsics, batch_size).to(device)
             #mesh_verts = sample_verts_to_batch(mesh_paths, num_sample_verts).to(device)
 
