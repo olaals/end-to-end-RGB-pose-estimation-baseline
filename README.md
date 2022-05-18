@@ -2,6 +2,9 @@
 
 ![Alt text](irrelevant-data/training-inference-process.png "Training inference process")
 
+
+# WARNING: This docs is out of date for the current commit, this documentation is only valid on commit b8b18d2a65deb7eb41b8128a96313137cc6f7c28
+
 A baseline for render-and-compare machine learning pose estimation using a known CAD model, without the use of depth measurements.
 
 The work is inspired by the DeepIM paper and CosyPose paper, but this repository contains a simplified version.
