@@ -1,6 +1,6 @@
 import os
-#os.environ['PYOPENGL_PLATFORM'] = 'osmesa'
-os.environ['PYOPENGL_PLATFORM'] = 'egl'
+os.environ['PYOPENGL_PLATFORM'] = 'osmesa'
+#os.environ['PYOPENGL_PLATFORM'] = 'egl'
 import numpy as np
 import spatialmath as sm
 import trimesh as tm
@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import pyrender
 from PIL import Image
 from se3_helpers import get_T_CO_init_and_gt
+import time
 
 
 def get_camera_matrix(intrinsics):
@@ -24,7 +25,7 @@ def get_camera_matrix(intrinsics):
 
 def add_object(scene, path):
     trimesh_mesh = tm.load(path)
-    mesh = pyrender.Mesh.from_trimesh(trimesh_mesh)
+    mesh = pyrender.Mesh.from_trimesh(trimesh_mesh, smooth=False)
     scene.add(mesh)
 
 def add_light(scene, T_CO):
