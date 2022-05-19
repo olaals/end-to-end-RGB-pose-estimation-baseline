@@ -94,7 +94,7 @@ def create_interpolated_image_fig(init_imgs, gt_imgs, pred_imgs_sequence, gt_img
         plt.show()
     if(save_dir is not None):
         print("Saving visualization:", save_path)
-        plt.savefig(save_path,dpi=300, bbox_inches='tight')
+        plt.savefig(save_path,dpi=150, bbox_inches='tight')
 
 
 def combine_imgs(img1, img2):
@@ -200,7 +200,7 @@ def visualize_examples(model, config, train_val_or_test, show_fig=False, save_di
             model_output = model(model_input)
             T_CO_pred = calculate_T_CO_pred(model_output, T_CO_pred, rot_repr, cam_mats)
             T_CO_pred = T_CO_pred.detach().cpu().numpy()
-            pred_imgs, norm_depth = render_batch(T_CO_pred, mesh_paths, cam_intrinsics, use_par_render)
+            pred_imgs, depths = render_batch(T_CO_pred, mesh_paths, cam_intrinsics, use_par_render)
             if not use_norm_depth: norm_depth=None
             
             pred_imgs_sequence.append(pred_imgs)
