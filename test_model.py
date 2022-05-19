@@ -95,7 +95,7 @@ def validate_model(model, config, val_or_test):
                     pred_imgs = init_imgs.numpy()
                     T_CO_pred = T_CO_pred.to(device)
                 else:
-                    pred_imgs, norm_depth = render_batch(T_CO_pred, mesh_paths, cam_intrinsics, use_par_render)
+                    pred_imgs, depths = render_batch(T_CO_pred, mesh_paths, cam_intrinsics, use_par_render)
                     T_CO_pred = torch.tensor(T_CO_pred).to(device)
                 model_input = prepare_model_input(pred_imgs, gt_imgs, depths, use_norm_depth).to(device)
                 model_output = model(model_input)
