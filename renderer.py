@@ -1,5 +1,5 @@
 import os
-os.environ['PYOPENGL_PLATFORM'] = 'osmesa'
+#os.environ['PYOPENGL_PLATFORM'] = 'osmesa'
 #os.environ['PYOPENGL_PLATFORM'] = 'egl'
 import numpy as np
 import spatialmath as sm
@@ -9,7 +9,8 @@ import matplotlib.pyplot as plt
 import pyrender
 from PIL import Image
 from se3_helpers import get_T_CO_init_and_gt
-import time
+from pyrender.constants import RenderFlags
+from spatialmath.base import trnorm
 
 
 def get_camera_matrix(intrinsics):
@@ -23,30 +24,57 @@ def get_camera_matrix(intrinsics):
     return K
 
 
-def add_object(scene, path):
-    trimesh_mesh = tm.load(path)
-    mesh = pyrender.Mesh.from_trimesh(trimesh_mesh, smooth=False)
-    scene.add(mesh)
+def add_object(scene, path, pose=None, force_mesh=False):
+    if(pose is None):
+        pose = sm.SE3.Rx(0).data[0]
+    if force_mesh:
+        trimesh_mesh = tm.load(path, force='mesh')
+    else:
+        trimesh_mesh = tm.load(path)
+    #mat = pyrender.Material(doubleSided=True)
+    if(isinstance(trimesh_mesh, tm.scene.scene.Scene)):
+        for m in list(trimesh_mesh.geometry.values()):
+            if(os.path.splitext(path)[1] == '.glb'): # correction for glb export from blender
+                rx = sm.SE3.Rx(90, unit='deg')
+                m = m.apply_transform(rx.data[0])
+            mesh = pyrender.Mesh.from_trimesh(m, smooth=False)
+            scene.add(mesh)
+    else:
+        if(os.path.splitext(path)[1] == '.glb'): # correction for glb export from blender
+            rx = sm.SE3.Rx(90, unit='deg')
+            trimesh_mesh = trimesh_mesh.apply_transform(rx.data[0])
+        mesh = pyrender.Mesh.from_trimesh(trimesh_mesh, smooth=False)
+        scene.add(mesh, pose=pose)
 
 def add_light(scene, T_CO):
     assert T_CO.shape == (4,4)
     T_OC = np.linalg.inv(T_CO)
     light = pyrender.SpotLight(color=np.ones(3), intensity=15.0,
-                            innerConeAngle=np.pi/8.0,
-                            outerConeAngle=np.pi/3.0)
+                            innerConeAngle=np.pi/9.0,
+                            outerConeAngle=np.pi/2.0)
     scene.add(light, pose=T_OC)
+
+def plot_SE3(T):
+    T = trnorm(T)
+    R = sm.SO3(trnorm(T[:3,:3]))
+    T = sm.SE3.Rt(R, T[:3,3])
+    T_orig = sm.SE3.Rx(0)
+    T_orig.plot(color='red')
+    T.plot( dims=[-3, 3, -3, 3, -3, 3])
+    plt.show()
 
 def add_camera(scene, T_CO, K):
     assert T_CO.shape == (4,4)
     T_OC = np.linalg.inv(T_CO)
+    #plot_SE3(T_OC)
     fx,fy, ux,uy = K[0,0], K[1,1], K[0,2], K[1,2]
     camera = pyrender.IntrinsicsCamera(fx, fy, ux,uy)
     scene.add(camera, pose=T_OC)
 
 def render(scene, img_size):
     r = pyrender.OffscreenRenderer(img_size, img_size)
-    color, depth = r.render(scene)
-    r.delete()
+    render_flags = RenderFlags.FACE_NORMALS
+    color, depth = r.render(scene, flags=render_flags)
     return color/255.0, depth
 
 
@@ -56,61 +84,41 @@ def render_scene(object_path, T_CO, cam_config):
     K = get_camera_matrix(cam_config)
 
     T_CO = sm.SE3.Rx(180, unit='deg').data[0]@T_CO # convert from OpenCV camera frame to OpenGL camera frame
-    scene = pyrender.Scene()
+    scene = pyrender.Scene(ambient_light=[0.1,0.1,0.1])
     scene.bg_color = (0,0,0)
     add_object(scene, object_path)
     add_light(scene, T_CO)
     add_camera(scene, T_CO, K)
     img, depth = render(scene, img_size)
-    return img, normalize_depth(depth)
-
-def normalize_depth(depth_img):
-    mean_val = np.mean(depth_img[depth_img>0.01])
-    std = np.std(depth_img[depth_img>0.01])
-    normalized = np.where(depth_img>0.01, (depth_img-mean_val)/std, 0.0)
-    return normalized.astype(np.float32)
+    return img, depth
 
 
-if __name__ == '__main__':
-    """
-    config = get_config()
-    test_mesh_path = os.path.join("irrelevant-data", "airplane_0180.ply")
-    #K = get_camera_matrix()
-    T_OC = look_at_SE3([0.8,0.8,0.8], [0,0,0], [0,0,1])
-    T_CO = T_OC.inv()
-    img = render_scene(test_mesh_path, T_CO.data[0], config)
-    pil_img = Image.fromarray((img*255).astype(np.uint8))
-    pil_img.save(os.path.join("irrelevant-data", "airplane_0180.png"))
-    plt.imshow(img)
-    plt.show()
-    """
-    def combine_imgs(img1, img2):
-        gs1 = np.mean(img1, axis=2)
-        gs2 = np.mean(img2, axis=2)
-        img = np.zeros((gs1.shape[0], gs1.shape[1], 3))
-        img[:,:,0] = gs1
-        img[:,:,1] = gs2
-        return img
+class CustomShaderCache():
+    def __init__(self):
+        self.program = None
 
-    import sys
-    sys.path.append("configs")
-    from baseline_cfg import get_config
-    config = get_config()
-    T_CO_init, T_CO_gt = get_T_CO_init_and_gt(config["scene_config"])
-    test_mesh_path = os.path.join("irrelevant-data", "airplane_0180.ply")
-    img_gt,_ = render_scene(test_mesh_path, T_CO_gt.data[0], config["camera_intrinsics"])
-    img_init, _= render_scene(test_mesh_path, T_CO_init.data[0], config["camera_intrinsics"])
-    fig,ax = plt.subplots(1,4)
-    ax[0].imshow(img_init)
-    ax[1].imshow(img_gt)
-    ax[2].imshow(combine_imgs(img_init, img_gt))
-    ax[3].imshow(combine_imgs(img_gt, img_gt))
+    def get_program(self, vertex_shader, fragment_shader, geometry_shader=None, defines=None):
+        if self.program is None:
+            mesh_vert = os.path.join("assets","shaders","mesh.vert")
+            mesh_frag = os.path.join("assets","shaders","mesh.frag")
+            self.program = pyrender.shader_program.ShaderProgram(mesh_vert, mesh_frag, defines=defines)
+        return self.program
 
+def render_normals(object_path, T_CO, cam_config):
+    assert T_CO.shape == (4,4)
+    img_size = cam_config["image_resolution"]
+    K = get_camera_matrix(cam_config)
 
-    plt.show()
-
-
-
-
+    T_CO = sm.SE3.Rx(180, unit='deg').data[0]@T_CO # convert from OpenCV camera frame to OpenGL camera frame
+    T_identity = sm.SE3.Rx(0).data[0]
+    scene = pyrender.Scene()
+    scene.bg_color = (0,0,0)
+    add_object(scene, object_path, pose=T_CO, force_mesh=True)
+    add_camera(scene, T_identity, K)
+    renderer = pyrender.OffscreenRenderer(img_size, img_size)
+    renderer._renderer._program_cache = CustomShaderCache()
+    normals, depth = renderer.render(scene)
+    normals = normals/255.0
+    return normals
 
 
