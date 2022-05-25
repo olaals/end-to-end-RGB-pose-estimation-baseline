@@ -116,6 +116,7 @@ def train(config):
     train_from_imgs = config["dataset_config"]["train_from_images"]
     ds_conf = config["dataset_config"]
     batch_size = config["train_params"]["batch_size"]
+    img_ds_name = ds_conf["img_dataset"]
     if train_from_imgs:
         train_loader, val_loader, test_loader = get_dataloaders(ds_conf, batch_size)
 
@@ -193,7 +194,7 @@ def train(config):
     logdir = config["logging"]["logdir"]
     os.makedirs(logdir, exist_ok=True)
     
-    writer = SummaryWriter(log_dir=os.path.join("tensorboard", config["config_name"]))
+    writer = SummaryWriter(log_dir=os.path.join("tensorboard", img_ds_name, config["config_name"]))
     
     start_time = time.time()
 
