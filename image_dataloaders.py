@@ -60,7 +60,7 @@ class ImagePoseDataset(Dataset):
         T_CO_gt = np.load(os.path.join(self.all_paths[idx], "T_CO_gt.npy"))
         T_CO_init = np.load(os.path.join(self.all_paths[idx], "T_CO_init.npy"))
         depth_pass = np.load(os.path.join(self.all_paths[idx], "init_depth.npy"))
-        real_img = np.asarray(Image.open(real_path))/255.0
+        real_img = np.asarray(Image.open(real_path).convert('RGB'))/255.0
         init_img = np.asarray(Image.open(init_path))/255.0
         mesh_path = get_mesh_path_from_yaml(os.path.join(self.all_paths[idx], "metadata.yml"))
         return init_img, real_img, T_CO_init, T_CO_gt, verts, mesh_path, depth_pass
@@ -84,7 +84,6 @@ if __name__ == '__main__':
     from baseline_cfg import get_config
     config = get_config()
     ds_conf = config["dataset_config"]
-    print(ds_conf)
     dataset_path = "img-datasets/MN10-alu-1k"
     classes = ["chair", "bed"]
 

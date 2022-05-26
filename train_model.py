@@ -127,6 +127,7 @@ def train(config):
     device = config["train_params"]["device"]
     use_pretrained = config["model_io"]["use_pretrained_model"]
     model_save_dir = config["model_io"]["model_save_dir"]
+    os.makedirs(model_save_dir, exist_ok=True)
     pretrained_name = config["model_io"]["pretrained_model_name"]
     pretrained_path = os.path.join(model_save_dir, pretrained_name)
     use_norm_depth = config["advanced"]["use_normalized_depth"]
@@ -234,6 +235,7 @@ def train(config):
             else:
                 pred_imgs, depths = render_batch(T_CO_pred, mesh_paths, cam_intrinsics, use_par_render)
                 T_CO_pred = torch.tensor(T_CO_pred).to(device)
+
             model_input = prepare_model_input(pred_imgs, gt_imgs, depths, use_norm_depth).to(device)
             model_output = model(model_input)
             T_CO_pred_new = calculate_T_CO_pred(model_output, T_CO_pred, rotation_repr, cam_mats)

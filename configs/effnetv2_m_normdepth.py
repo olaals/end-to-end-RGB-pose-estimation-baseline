@@ -35,7 +35,7 @@ def get_config():
         "dataset_config":{
             "train_from_images": True,
             "train_classes": all_classes_modelnet10, # all_classes or specify indivudal as ["desk", "sofa", "plant"]
-            "model3d_dataset": "ModelNet10-norm-clean-ply",
+            "model3d_dataset": "ModelNet10-texturized",
             "img_dataset": img_dataset,
             "img_ds_conf":{
                 "real": "real.png",
@@ -61,7 +61,7 @@ def get_config():
         },
         "model_io":{
             "use_pretrained_model": False,  # start training from a pretrained model
-            "pretrained_model_name": "baseline_cfg-baseline-SVD.pth", # load predtrained model, if use_pretrained_model = True
+            "pretrained_model_name": "", # load predtrained model, if use_pretrained_model = True
             "model_save_dir": os.path.join("models", "saved-models", img_dataset),
             "model_save_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
             "batch_model_save_interval": 500,  # save model during tranining after every N batch trained

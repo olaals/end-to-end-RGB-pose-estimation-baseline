@@ -1,5 +1,5 @@
 import os
-#os.environ['PYOPENGL_PLATFORM'] = 'osmesa'
+os.environ['PYOPENGL_PLATFORM'] = 'osmesa'
 #os.environ['PYOPENGL_PLATFORM'] = 'egl'
 import numpy as np
 import spatialmath as sm
@@ -73,8 +73,8 @@ def add_camera(scene, T_CO, K):
 
 def render(scene, img_size):
     r = pyrender.OffscreenRenderer(img_size, img_size)
-    render_flags = RenderFlags.FACE_NORMALS
-    color, depth = r.render(scene, flags=render_flags)
+    #render_flags = RenderFlags.FACE_NORMALS
+    color, depth = r.render(scene)
     return color/255.0, depth
 
 
