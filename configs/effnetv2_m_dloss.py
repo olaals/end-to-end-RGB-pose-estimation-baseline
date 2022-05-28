@@ -1,11 +1,6 @@
 import torch
 import os
 
-all_classes_modelnet40 = ["airplane", "bench", "bowl", "cone", "desk", "flower_pot", "keyboard", "mantel", "person", "radio",
-                          "sofa", "table", "tv_stand", "xbox", "bathtub", "bookshelf", "car", "cup", "door", "glass_box",
-                          "lamp", "monitor", "piano", "range_hood", "stairs", "tent", "vase", "bed", "bottle", "chair", "curtain",
-                          "dresser", "guitar", "laptop", "night_stand", "plant", "sink", "stool", "toilet", "wardrobe"]
-
 all_classes_modelnet10 = ["bathtub", "bed", "chair", "desk", "dresser", "monitor", "night_stand", "sofa", "table","toilet"]
 
 
@@ -16,6 +11,8 @@ def get_config():
 
     rotation_rep = "SVD" #SVD or 6D,
     backend_network = "effnetv2_m"
+    img_dataset = "MN10-alu-30k"
+    model3d_dataset = "ModelNet10-norm-clean-ply"
 
 
 
@@ -34,8 +31,8 @@ def get_config():
         "dataset_config":{
             "train_from_images": True,
             "train_classes": all_classes_modelnet10, # all_classes or specify indivudal as ["desk", "sofa", "plant"]
-            "model3d_dataset": "ModelNet10-norm-clean-ply",
-            "img_dataset": "MN10-alu-30k",
+            "model3d_dataset": model3d_dataset,
+            "img_dataset": img_dataset,
             "img_ds_conf":{
                 "real": "real.png",
                 "init": "init.png"
@@ -60,13 +57,13 @@ def get_config():
         },
         "model_io":{
             "use_pretrained_model": False,  # start training from a pretrained model
-            "pretrained_model_name": "baseline_cfg-baseline-SVD.pth", # load predtrained model, if use_pretrained_model = True
-            "model_save_dir": os.path.join("models", "saved-models"),
-            "model_save_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
+            "pretrained_model_name": "", # load predtrained model, if use_pretrained_model = True
+            "model_save_dir": os.path.join("models", "saved-models", img_dataset),
+            "model_save_name": this_file_name  +".pth",
             "batch_model_save_interval": 500,  # save model during tranining after every N batch trained
         },
         "logging":{
-            "logdir": os.path.join("logdir", this_file_name),
+            "logdir": os.path.join("logdir", img_dataset, this_file_name),
             "save_viz_every_n_batch": 5000,
             "save_visualization_at_batches": [100, 500, 1000, 2000],
             "log_save_interval":50,
@@ -78,8 +75,17 @@ def get_config():
             "predict_iterations": 3,
             "iterations_per_class": 1,
             "model_load_dir": os.path.join("models", "saved-models"),
-            "model_load_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
+            "model_load_name": this_file_name +".pth",
             "test_classes": all_classes_modelnet10,
+        },
+        "test_dataset_config":{
+            "img_dataset": "stiffener-and-adapter",
+            "model3d_dataset": "stiffener-and-adapter",
+            "train_classes": ["assembly-stiffener"], 
+            "img_ds_conf":{
+                "real": "real.png",
+                "init": "init.png"
+            },
         },
         "advanced":{
             "use_normalized_depth": False, # use a normalized rendered depth in the model input

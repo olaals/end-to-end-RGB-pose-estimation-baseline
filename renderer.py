@@ -75,13 +75,20 @@ def render(scene, img_size):
     r = pyrender.OffscreenRenderer(img_size, img_size)
     #render_flags = RenderFlags.FACE_NORMALS
     color, depth = r.render(scene)
+    r.delete()
     return color/255.0, depth
 
 
-def render_scene(object_path, T_CO, cam_config):
+def render_scene(object_path, T_CO, cam_config=None, K=None, img_size=None):
     assert T_CO.shape == (4,4)
-    img_size = cam_config["image_resolution"]
-    K = get_camera_matrix(cam_config)
+    if (K is not None and img_size is not None):
+        K = K
+        img_size = img_size
+    else:
+        assert (cam_config is not None)
+        K = get_camera_matrix(cam_config)
+        img_size = cam_config["image_resolution"]
+
 
     T_CO = sm.SE3.Rx(180, unit='deg').data[0]@T_CO # convert from OpenCV camera frame to OpenGL camera frame
     scene = pyrender.Scene(ambient_light=[0.1,0.1,0.1])

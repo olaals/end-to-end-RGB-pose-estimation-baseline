@@ -9,7 +9,7 @@ def get_config():
     this_file_name = os.path.split(os.path.splitext(__file__)[0])[-1]
     print("Config file name:", this_file_name)
 
-    rotation_rep = "6D" #SVD or 6D,
+    rotation_rep = "SVD" #SVD or 6D,
     backend_network = "effnet_b3"
     img_dataset = "MN10-texture-30k"
     model3d_dataset = "ModelNet10-texturized"
@@ -59,7 +59,7 @@ def get_config():
             "use_pretrained_model": False,  # start training from a pretrained model
             "pretrained_model_name": "", # load predtrained model, if use_pretrained_model = True
             "model_save_dir": os.path.join("models", "saved-models", img_dataset),
-            "model_save_name": this_file_name  +".pth",
+            "model_save_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
             "batch_model_save_interval": 500,  # save model during tranining after every N batch trained
         },
         "logging":{
@@ -75,7 +75,7 @@ def get_config():
             "predict_iterations": 3,
             "iterations_per_class": 1,
             "model_load_dir": os.path.join("models", "saved-models"),
-            "model_load_name": this_file_name +".pth",
+            "model_load_name": this_file_name + "-" + backend_network+"-"+rotation_rep+".pth",
             "test_classes": all_classes_modelnet10,
         },
         "advanced":{

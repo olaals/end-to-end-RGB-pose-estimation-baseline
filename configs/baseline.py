@@ -9,7 +9,7 @@ def get_config():
     this_file_name = os.path.split(os.path.splitext(__file__)[0])[-1]
     print("Config file name:", this_file_name)
 
-    rotation_rep = "6D" #SVD or 6D,
+    rotation_rep = "SVD" #SVD or 6D,
     backend_network = "effnet_b3"
     img_dataset = "MN10-texture-30k"
     model3d_dataset = "ModelNet10-texturized"
@@ -78,10 +78,19 @@ def get_config():
             "model_load_name": this_file_name +".pth",
             "test_classes": all_classes_modelnet10,
         },
+        "test_dataset_config":{
+            "img_dataset": "stiffener-and-adapter",
+            "model3d_dataset": "stiffener-and-adapter",
+            "train_classes": all_classes_modelnet10, 
+            "img_ds_conf":{
+                "real": "real.png",
+                "init": "init.png"
+            },
+        },
         "advanced":{
             "use_normalized_depth": False, # use a normalized rendered depth in the model input
             "train_iter_policy": "incremental", # constant or incremental
-            "train_iter_policy_argument": [(150000,2),(180000,3)], # if train_iter_policy is constant use a number i.e. 3, if incremental use tuple list [(100,2),(1000,3)]
+            "train_iter_policy_argument": [(5,2),(150000,3),(180000,4)], # if train_iter_policy is constant use a number i.e. 3, if incremental use tuple list [(100,2),(1000,3)]
         },
 
 

@@ -57,13 +57,15 @@ class ImagePoseDataset(Dataset):
         real_path = os.path.join(self.all_paths[idx], self.filename_real)
         init_path = os.path.join(self.all_paths[idx], self.filename_init)
         verts = np.load(os.path.join(self.all_paths[idx], "vertices.npy"))
+        print(self.all_paths[idx])
         T_CO_gt = np.load(os.path.join(self.all_paths[idx], "T_CO_gt.npy"))
         T_CO_init = np.load(os.path.join(self.all_paths[idx], "T_CO_init.npy"))
         depth_pass = np.load(os.path.join(self.all_paths[idx], "init_depth.npy"))
+        K = np.load(os.path.join(self.all_paths[idx], "K.npy"))
         real_img = np.asarray(Image.open(real_path).convert('RGB'))/255.0
         init_img = np.asarray(Image.open(init_path))/255.0
         mesh_path = get_mesh_path_from_yaml(os.path.join(self.all_paths[idx], "metadata.yml"))
-        return init_img, real_img, T_CO_init, T_CO_gt, verts, mesh_path, depth_pass
+        return init_img, real_img, T_CO_init, T_CO_gt, verts, mesh_path, depth_pass, K
 
 def get_dataloaders(ds_conf, batch_size):
     train_ds = ImagePoseDataset("train", ds_conf)
@@ -73,6 +75,22 @@ def get_dataloaders(ds_conf, batch_size):
     test_ds = ImagePoseDataset("test", ds_conf)
     test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False)
     return train_loader, val_loader, test_loader
+
+def get_dataloader(ds_conf, batch_size, train_test_or_val="train"):
+    if(train_test_or_val == 'train'):
+        train_ds = ImagePoseDataset("train", ds_conf)
+        train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+        return train_loader
+    elif(train_test_or_val == 'val'):
+        val_ds = ImagePoseDataset("validation", ds_conf)
+        val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
+        return val_loader
+    elif(train_test_or_val == 'test'):
+        test_ds = ImagePoseDataset("test", ds_conf)
+        test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False)
+        return test_loader
+    else:
+        assert False, f'Could not find dataloader for {train_test_or_val}'
 
 
 

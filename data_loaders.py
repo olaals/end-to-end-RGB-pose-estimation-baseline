@@ -72,7 +72,7 @@ def normalize_depth(depth_img):
     return normalized.astype(np.float32)
 
 
-def render_batch(T_COs, mesh_paths, cam_config, parallel_render=False):
+def render_batch(T_COs, mesh_paths, Ks, img_size, parallel_render=False):
 
     now = time.time()
     if parallel_render:
@@ -82,21 +82,24 @@ def render_batch(T_COs, mesh_paths, cam_config, parallel_render=False):
         print("Par render_time:", dur)
         return imgs, norm_depths
     else:
-        imgs, norm_depths = render_batch_sequential(T_COs, mesh_paths, cam_config)
+        imgs, norm_depths = render_batch_sequential(T_COs, mesh_paths, Ks, img_size)
         then = time.time()
         dur = then-now
         print("Seq render_time:", dur)
         return imgs, norm_depths
 
-def render_batch_sequential(T_COs, mesh_paths, cam_config):
+def render_batch_sequential(T_COs, mesh_paths, Ks, img_size):
     bsz = len(mesh_paths)
+    print(img_size)
     assert T_COs.shape == (bsz,4,4)
+    assert Ks.shape == (bsz,3,3)
     imgs = []
     norm_depths = []
     for i in range(bsz):
         mesh_path = mesh_paths[i]
         T_CO = T_COs[i]
-        img, norm_depth = render_scene(mesh_path, T_CO, cam_config)
+        K = Ks[i]
+        img, norm_depth = render_scene(mesh_path, T_CO, K=K, img_size=img_size)
         imgs.append(img.astype(np.float32))
         norm_depths.append(norm_depth.astype(np.float32))
     imgs = np.array(imgs, dtype=np.float32)

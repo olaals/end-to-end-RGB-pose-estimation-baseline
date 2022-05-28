@@ -81,10 +81,10 @@ def validate_model(model, config, val_or_test):
     results = np.zeros((test_predict_iterations, len(data_loader.dataset)))
     examples = 0
     with torch.no_grad():
-        for i, (init_imgs, gt_imgs, T_CO_init, T_CO_gt, mesh_verts, mesh_paths, depths) in enumerate(data_loader):
+        for i, (init_imgs, gt_imgs, T_CO_init, T_CO_gt, mesh_verts, mesh_paths, depths, cam_mats) in enumerate(data_loader):
             depths = depths.numpy()
             bsz = len(T_CO_init)
-            cam_mats = get_camera_mat_tensor(cam_intrinsics, bsz).to(device)
+            #cam_mats = get_camera_mat_tensor(cam_intrinsics, bsz).to(device)
             T_CO_pred = T_CO_init
             gt_imgs = gt_imgs.numpy()
             mesh_verts = mesh_verts.to(device)

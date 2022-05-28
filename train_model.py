@@ -137,7 +137,9 @@ def train(config):
     model_save_path = os.path.join(model_save_dir, model_save_name)
 
     cam_intrinsics = config["camera_intrinsics"]
+    img_size = cam_intrinsics["image_resolution"]
     
+
     model = fetch_network(model_name, rotation_repr, use_norm_depth, use_pretrained, pretrained_path)
     model = model.to(device)
 
@@ -209,22 +211,14 @@ def train(config):
 
     while(True):
         start_time = time.time()
-        if train_from_imgs:
-            init_imgs, gt_imgs, T_CO_init, T_CO_gt, mesh_verts, mesh_paths, depths = next(iter(train_loader))
-            init_imgs = init_imgs.numpy()
-            gt_imgs = gt_imgs.numpy()
-            depths = depths.numpy()
-            T_CO_gt = T_CO_gt.to(device)
-            mesh_verts = mesh_verts.to(device)
+        init_imgs, gt_imgs, T_CO_init, T_CO_gt, mesh_verts, mesh_paths, depths, cam_mats = next(iter(train_loader))
+        init_imgs = init_imgs.numpy()
+        gt_imgs = gt_imgs.numpy()
+        depths = depths.numpy()
+        T_CO_gt = T_CO_gt.to(device)
+        mesh_verts = mesh_verts.to(device)
 
-        else:
-            T_CO_init, T_CO_gt = sample_T_CO_inits_and_gts(batch_size, scene_config)
-            mesh_paths = sample_mesh_paths(batch_size, model3d_dataset, train_classes, "train")
-            mesh_verts = sample_verts_to_batch(mesh_paths, num_sample_verts).to(device) 
-            gt_imgs,_ = render_batch(T_CO_gt, mesh_paths, cam_intrinsics, use_par_render)
-            T_CO_gt = torch.tensor(T_CO_gt).to(device)
-
-        cam_mats = get_camera_mat_tensor(cam_intrinsics, batch_size).to(device)
+        #cam_mats = get_camera_mat_tensor(cam_intrinsics, batch_size).to(device)
         T_CO_pred = T_CO_init # current pred is initial
         train_iterations = train_iter_policy(batch_num, policy_argument)
         for j in range(train_iterations):
@@ -233,7 +227,7 @@ def train(config):
                 pred_imgs = init_imgs
                 T_CO_pred = T_CO_pred.to(device)
             else:
-                pred_imgs, depths = render_batch(T_CO_pred, mesh_paths, cam_intrinsics, use_par_render)
+                pred_imgs, depths = render_batch(T_CO_pred, mesh_paths, cam_mats, img_size, use_par_render)
                 T_CO_pred = torch.tensor(T_CO_pred).to(device)
 
             model_input = prepare_model_input(pred_imgs, gt_imgs, depths, use_norm_depth).to(device)
