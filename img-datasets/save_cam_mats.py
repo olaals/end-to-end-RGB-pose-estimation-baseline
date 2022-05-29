@@ -17,12 +17,14 @@ cam_intr={
     "image_resolution": 320, # width=height
 }
 
-ds_name = "MN10-texture-30k"
+ds_name = "MN10-tless-30k"
 K = get_camera_matrix(cam_intr)
 
 
 class_dirs = [os.path.join(ds_name, classname) for classname in os.listdir(ds_name)]
 for class_dir in class_dirs:
+    if(not os.path.isdir(class_dir)):
+        continue
     dataset_class_types = [os.path.join(class_dir, class_type) for class_type in os.listdir(class_dir)]
     for dataset_class_type in dataset_class_types:
         print(dataset_class_types)

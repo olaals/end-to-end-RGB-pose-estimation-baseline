@@ -11,7 +11,7 @@ def get_config():
 
     rotation_rep = "SVD" #SVD or 6D,
     backend_network = "effnetv2_m"
-    img_dataset = "MN10-alu-30k"
+    img_dataset = "MN10-tless-30k"
     model3d_dataset = "ModelNet10-norm-clean-ply"
 
 
@@ -81,7 +81,7 @@ def get_config():
         "test_dataset_config":{
             "img_dataset": "stiffener-and-adapter",
             "model3d_dataset": "stiffener-and-adapter",
-            "train_classes": ["assembly-stiffener"], 
+            "train_classes": ["node-adapter"], 
             "img_ds_conf":{
                 "real": "real.png",
                 "init": "init.png"

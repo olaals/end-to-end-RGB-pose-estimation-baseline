@@ -57,7 +57,6 @@ class ImagePoseDataset(Dataset):
         real_path = os.path.join(self.all_paths[idx], self.filename_real)
         init_path = os.path.join(self.all_paths[idx], self.filename_init)
         verts = np.load(os.path.join(self.all_paths[idx], "vertices.npy"))
-        print(self.all_paths[idx])
         T_CO_gt = np.load(os.path.join(self.all_paths[idx], "T_CO_gt.npy"))
         T_CO_init = np.load(os.path.join(self.all_paths[idx], "T_CO_init.npy"))
         depth_pass = np.load(os.path.join(self.all_paths[idx], "init_depth.npy"))
