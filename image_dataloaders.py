@@ -53,6 +53,14 @@ class ImagePoseDataset(Dataset):
     def __len__(self):
         return len(self.all_paths)
 
+    def augment_handler(self, image):
+        transforms = A.Compose([
+            A.RGBShift(r_shift_limit=30, g_shift_limit=30, b_shift_limit=30, p=1.0),
+            A.RandomBrightnessContrast(brightness_limit=(-0.15, 0.35), contrast_limit=0.25, p=1.0),
+        ])
+        image = transforms(image=image)["image"]
+        return image
+
     def __getitem__(self, idx):
         real_path = os.path.join(self.all_paths[idx], self.filename_real)
         init_path = os.path.join(self.all_paths[idx], self.filename_init)
@@ -61,7 +69,9 @@ class ImagePoseDataset(Dataset):
         T_CO_init = np.load(os.path.join(self.all_paths[idx], "T_CO_init.npy"))
         depth_pass = np.load(os.path.join(self.all_paths[idx], "init_depth.npy"))
         K = np.load(os.path.join(self.all_paths[idx], "K.npy"))
-        real_img = np.asarray(Image.open(real_path).convert('RGB'))/255.0
+        real_img = np.asarray(Image.open(real_path).convert('RGB'))
+        #real_img = self.augment_handler(real_img) 
+        real_img = real_img/255.0
         init_img = np.asarray(Image.open(init_path))/255.0
         mesh_path = get_mesh_path_from_yaml(os.path.join(self.all_paths[idx], "metadata.yml"))
         return init_img, real_img, T_CO_init, T_CO_gt, verts, mesh_path, depth_pass, K

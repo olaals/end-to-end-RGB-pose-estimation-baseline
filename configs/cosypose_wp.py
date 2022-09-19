@@ -9,8 +9,8 @@ def get_config():
     this_file_name = os.path.split(os.path.splitext(__file__)[0])[-1]
     print("Config file name:", this_file_name)
 
-    rotation_rep = "SVD" #SVD or 6D,
-    backend_network = "effnetv2_m"
+    rotation_rep = "6D" #SVD or 6D,
+    backend_network = "effnetv2_l"
     img_dataset = "MN10-tless-30k"
     model3d_dataset = "ModelNet10-norm-clean-ply"
 

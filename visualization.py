@@ -196,12 +196,6 @@ def visualize_examples(model, config, train_val_or_test, show_fig=False, save_di
 
 
 
-
-
-
-
-
-
 if __name__ == '__main__':
     config = get_dict_from_cli()
     model_name = config["network"]["backend_network"]

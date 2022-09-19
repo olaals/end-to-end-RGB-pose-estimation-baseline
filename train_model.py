@@ -122,14 +122,15 @@ def train(config):
 
 
     # model load parameters
+    pretrained_model_dir = config["model_io"]["pretrained_model_dir"]
+    pretrained_name = config["model_io"]["pretrained_model_name"]
+    pretrained_path = os.path.join(pretrained_model_dir, pretrained_name)
     model_name = config["network"]["backend_network"]
     rotation_repr = config["network"]["rotation_representation"]
     device = config["train_params"]["device"]
     use_pretrained = config["model_io"]["use_pretrained_model"]
     model_save_dir = config["model_io"]["model_save_dir"]
     os.makedirs(model_save_dir, exist_ok=True)
-    pretrained_name = config["model_io"]["pretrained_model_name"]
-    pretrained_path = os.path.join(model_save_dir, pretrained_name)
     use_norm_depth = config["advanced"]["use_normalized_depth"]
     # model saving
     save_every_n_batch = config["model_io"]["batch_model_save_interval"]

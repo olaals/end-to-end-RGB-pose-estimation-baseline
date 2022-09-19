@@ -1,8 +1,7 @@
 import torch
 import os
 
-all_classes_modelnet10 = ["bathtub", "bed", "chair", "desk", "dresser", "monitor", "night_stand", "sofa", "table","toilet"]
-
+ds_classes = ["node-adapter", "alu-corner"]
 
 def get_config():
 
@@ -11,18 +10,16 @@ def get_config():
 
     rotation_rep = "SVD" #SVD or 6D,
     backend_network = "effnetv2_l"
-    img_dataset = "MN10-tless-30k"
-    model3d_dataset = "ModelNet10-norm-clean-ply"
-
-
+    img_dataset = "weldpieces-real"
+    model3d_dataset = "weldpieces-ts"
 
 
     return {
         "config_name":this_file_name,
         "train_params":{
             "batch_size":8,
-            "learning_rate": 3e-4, 
-            "num_batches_to_train": 200000, # stop training after N batches
+            "learning_rate": 3e-5, 
+            "num_batches_to_train": 10000, # stop training after N batches
             "optimizer":"adam",
             "loss": "add_l1_disentangled",
             "num_sample_vertices": 1000,  # number of vertices sampled from the mesh, used in calculating the loss
@@ -30,7 +27,7 @@ def get_config():
         },
         "dataset_config":{
             "train_from_images": True,
-            "train_classes": all_classes_modelnet10, # all_classes or specify indivudal as ["desk", "sofa", "plant"]
+            "train_classes": ds_classes, # all_classes or specify indivudal as ["desk", "sofa", "plant"]
             "model3d_dataset": model3d_dataset,
             "img_dataset": img_dataset,
             "img_ds_conf":{
@@ -56,15 +53,16 @@ def get_config():
             "use_parallel_rendering":False,
         },
         "model_io":{
-            "use_pretrained_model": False,  # start training from a pretrained model
-            "pretrained_model_name": "", # load predtrained model, if use_pretrained_model = True
+            "use_pretrained_model": True,  # start training from a pretrained model
+            "pretrained_model_dir":"models/saved-models/MN10-tless-30k",
+            "pretrained_model_name": "effnetv2_l_normdepth2.pth", # load predtrained model, if use_pretrained_model = True
             "model_save_dir": os.path.join("models", "saved-models", img_dataset),
             "model_save_name": this_file_name  +".pth",
             "batch_model_save_interval": 500,  # save model during tranining after every N batch trained
         },
         "logging":{
             "logdir": os.path.join("logdir", img_dataset, this_file_name),
-            "save_viz_every_n_batch": 5000,
+            "save_viz_every_n_batch": 200,
             "save_visualization_at_batches": [100, 500, 1000, 2000],
             "log_save_interval":50,
             "validation_interval":1000,
@@ -76,7 +74,7 @@ def get_config():
             "iterations_per_class": 1,
             "model_load_dir": os.path.join("models", "saved-models"),
             "model_load_name": this_file_name +".pth",
-            "test_classes": all_classes_modelnet10,
+            "test_classes": ds_classes,
         },
         "test_dataset_config":{
             "img_dataset": "stiffener-and-adapter",
@@ -90,7 +88,7 @@ def get_config():
         "advanced":{
             "use_normalized_depth": True, # use a normalized rendered depth in the model input
             "train_iter_policy": "incremental", # constant or incremental
-            "train_iter_policy_argument": [(150000,2),(180000,3)], # if train_iter_policy is constant use a number i.e. 3, if incremental use tuple list [(100,2),(1000,3)]
+            "train_iter_policy_argument": [(10,2),(20,3)], # if train_iter_policy is constant use a number i.e. 3, if incremental use tuple list [(100,2),(1000,3)]
         },
 
 

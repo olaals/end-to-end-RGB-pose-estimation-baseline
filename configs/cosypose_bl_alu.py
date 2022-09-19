@@ -1,20 +1,17 @@
 import torch
 import os
 
-all_classes_modelnet10 = ["bathtub", "bed", "chair", "desk", "dresser", "monitor", "night_stand", "sofa", "table","toilet"]
-
+all_classes_modelnet10 = ["bed", "chair", "desk", "dresser", "monitor", "night_stand", "sofa", "table","toilet"]
 
 def get_config():
 
     this_file_name = os.path.split(os.path.splitext(__file__)[0])[-1]
     print("Config file name:", this_file_name)
 
-    rotation_rep = "SVD" #SVD or 6D,
-    backend_network = "effnet_b3"
-    img_dataset = "MN10-texture-30k"
-    model3d_dataset = "ModelNet10-texturized"
-
-
+    rotation_rep = "6D" #SVD or 6D,
+    backend_network = "effnetv2_l"
+    img_dataset = "MN10-alu-blender"
+    model3d_dataset = "ModelNet10-norm-clean-ply"
 
 
     return {
@@ -22,7 +19,7 @@ def get_config():
         "train_params":{
             "batch_size":8,
             "learning_rate": 3e-4, 
-            "num_batches_to_train": 200000, # stop training after N batches
+            "num_batches_to_train": 100000, # stop training after N batches
             "optimizer":"adam",
             "loss": "add_l1_disentangled",
             "num_sample_vertices": 1000,  # number of vertices sampled from the mesh, used in calculating the loss
@@ -65,9 +62,9 @@ def get_config():
         "logging":{
             "logdir": os.path.join("logdir", img_dataset, this_file_name),
             "save_viz_every_n_batch": 5000,
-            "save_visualization_at_batches": [15,100, 500, 1000, 2000],
-            "log_save_interval":10,
-            "validation_interval":10,
+            "save_visualization_at_batches": [100, 500, 1000, 2000],
+            "log_save_interval":50,
+            "validation_interval":1000,
             "val_examples_from_each_class":8,
         },
         "test_config":{
@@ -81,7 +78,7 @@ def get_config():
         "test_dataset_config":{
             "img_dataset": "stiffener-and-adapter",
             "model3d_dataset": "stiffener-and-adapter",
-            "train_classes": all_classes_modelnet10, 
+            "train_classes": ["node-adapter"], 
             "img_ds_conf":{
                 "real": "real.png",
                 "init": "init.png"
@@ -90,7 +87,7 @@ def get_config():
         "advanced":{
             "use_normalized_depth": False, # use a normalized rendered depth in the model input
             "train_iter_policy": "incremental", # constant or incremental
-            "train_iter_policy_argument": [(5,2),(150000,3),(180000,4)], # if train_iter_policy is constant use a number i.e. 3, if incremental use tuple list [(100,2),(1000,3)]
+            "train_iter_policy_argument": [(85000,2),(95000,3)], # if train_iter_policy is constant use a number i.e. 3, if incremental use tuple list [(100,2),(1000,3)]
         },
 
 
