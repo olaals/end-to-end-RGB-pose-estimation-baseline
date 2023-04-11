@@ -36,7 +36,7 @@ Snippets of code are copied from the CosyPose github. Copied functions contains 
 # Training and testing
 ## 1: Create a config file
 1. Create a config file in ![configs][configs] 
-2. An example config file is given in ![example_config.py][configs/example_config]
+2. An example config file is given in ![example_config.py][configs/example_config.py]
 ## 2: Training a model
 1. To train a model, run the following command
 ```bash
