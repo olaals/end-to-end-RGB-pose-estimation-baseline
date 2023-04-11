@@ -42,9 +42,16 @@ Snippets of code are copied from the CosyPose github. Copied functions contains 
 ```bash
 python train_model.py configs/example_config.py
 ```
-
-
-
+2. The training and validation loss may be tracked with tensorboard with
+```bash
+tensorboard --logdir tensorboard
+```
+Additional visualizations are stored in [logdir](logdir)
+## 3: Testing a model
+```bash
+python test_model.py configs/example_config.py
+```
+The results are stored in [logdir](logdir)
 
 
 # Technical details
