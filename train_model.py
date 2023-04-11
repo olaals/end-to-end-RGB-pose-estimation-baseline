@@ -11,11 +11,13 @@ from parser_config import get_dict_from_cli
 import pickle
 import matplotlib.pyplot as plt
 from visualization import visualize_examples
-from test_model import evaluate_model, validate_model
+from test_model import validate_model
 from torch.utils.tensorboard import SummaryWriter
 import time
 import datetime
 torch.autograd.set_detect_anomaly(True)
+
+lowest_val = 100.0
 
 def pickle_log_dict(log_dict, logdir):
     save_path = os.path.join(logdir, "log_dict.pkl")
@@ -30,16 +32,18 @@ def calculate_eta(start_time, perc_complete):
     return str(datetime.timedelta(seconds=est_remaining))
     
 
-def save_loss_plot(losses, training_examples, loss_name, logdir):
+def save_loss_plot(losses, training_examples, loss_name, logdir, yscale='log', y_bound_max=None):
     assert len(losses) == len(training_examples)
     fig,ax = plt.subplots()
     fig.set_size_inches(9.5, 5.5)
     ax.set_title(loss_name)
     ax.set_xlabel("Training examples")
     ax.set_ylabel(loss_name)
-    ax.set_yscale('log')
+    ax.set_yscale(yscale)
+    if y_bound_max is not None:
+        ax.set_ybound(upper=y_bound_max)
     plt.plot(training_examples, losses)
-    save_path = os.path.join(logdir, loss_name.replace(" ", "-")+".png")
+    save_path = os.path.join(logdir, loss_name.replace(" ", "-")+"-"+yscale+".png")
     plt.savefig(save_path)
     plt.close()
 
@@ -69,12 +73,13 @@ def save_plot_validation_loss(val_data_struct,logdir, loss_name):
         
 
 
-def logging(model, config, writer, log_dict, logdir, batch_num, train_examples):
+def logging(model, config, writer, log_dict, logdir, batch_num, train_examples, model_save_path, lowest_val):
     log_interval = config["logging"]["log_save_interval"]
     if(batch_num%log_interval == 0):
         current_loss = log_dict["loss"]["add_l1"][:batch_num]
         current_train_ex =log_dict["loss"]["train_ex"][:batch_num] 
-        save_loss_plot(current_loss, current_train_ex, "ADD L1 Loss", logdir)
+        save_loss_plot(current_loss, current_train_ex, "ADD L1 Loss", logdir, 'log')
+        save_loss_plot(current_loss, current_train_ex, "ADD L1 Loss", logdir, 'linear', 1.2)
         pickle_log_dict(log_dict, logdir)
     
     save_viz_batches = config["logging"]["save_visualization_at_batches"]
@@ -88,7 +93,6 @@ def logging(model, config, writer, log_dict, logdir, batch_num, train_examples):
     validation_interval = config["logging"]["validation_interval"]
     if(batch_num%validation_interval == 0 and batch_num != 0):
         val_ex = config["logging"]["val_examples_from_each_class"]
-        #loss_dict, mean_losses = evaluate_model(model, config, "train", use_all_examples=False, max_examples_from_each_class=val_ex)
         mean_losses = validate_model(model, config, "val")
         #log_dict["val_loss_dicts"].append((train_examples, loss_dict))
         log_dict["val_loss"].append((train_examples, mean_losses))
@@ -102,8 +106,14 @@ def logging(model, config, writer, log_dict, logdir, batch_num, train_examples):
             iter_dict[f'Iter{i}'] = mean_losses[i]
         writer.add_scalars('Validation_ADD_L1_loss_iters', iter_dict, train_examples)
 
+        if mean_losses[-1] < lowest_val:
+            print("New lowest val, saving model to ", model_save_path)
+            lowest_val = mean_losses[-1]
+            torch.save(model.state_dict(), model_save_path)
+
 
     model.train()
+    return lowest_val
 
 
 
@@ -112,13 +122,11 @@ def train(config):
 
     # dataset config
     model3d_dataset = config["dataset_config"]["model3d_dataset"]
-    train_classes = config["dataset_config"]["train_classes"]
-    train_from_imgs = config["dataset_config"]["train_from_images"]
+    classes = config["dataset_config"]["classes"]
     ds_conf = config["dataset_config"]
     batch_size = config["train_params"]["batch_size"]
     img_ds_name = ds_conf["img_dataset"]
-    if train_from_imgs:
-        train_loader, val_loader, test_loader = get_dataloaders(ds_conf, batch_size)
+    train_loader, val_loader, test_loader = get_dataloaders(ds_conf, batch_size)
 
 
     # model load parameters
@@ -201,6 +209,7 @@ def train(config):
     writer = SummaryWriter(log_dir=os.path.join("tensorboard", img_ds_name, config["config_name"]))
     
     start_time = time.time()
+    lowest_val = 100.0
 
 
     """
@@ -224,7 +233,7 @@ def train(config):
         train_iterations = train_iter_policy(batch_num, policy_argument)
         for j in range(train_iterations):
             optimizer.zero_grad()
-            if(j==0 and train_from_imgs):
+            if(j==0):
                 pred_imgs = init_imgs
                 T_CO_pred = T_CO_pred.to(device)
             else:
@@ -245,15 +254,14 @@ def train(config):
             print(f'ADD L1 loss for train batch {batch_num}, with {new_batch_num} new batches, train iter {j}: {addl1_loss.item():.4f}, batch time: {elapsed:.3f}')
             log_dict["loss"]["add_l1"][batch_num] = addl1_loss.item()
             log_dict["loss"]["train_ex"][batch_num] = train_examples
-            logging(model, config, writer, log_dict, logdir, batch_num, train_examples)
+            lowest_val = logging(model, config, writer, log_dict, logdir, batch_num, train_examples, model_save_path, lowest_val)
 
             if batch_num != 0 and batch_num%save_every_n_batch == 0:
                 writer.add_scalar("ADD_L1_loss", addl1_loss.item(), train_examples)
                 perc_complete = (batch_num*1.0)/num_train_batches
-                print("Saving model to", model_save_path)
+                #print("Saving model to", model_save_path)
                 print(f'Trained {batch_num} of {num_train_batches}. Training {(perc_complete*100.0):.3f} % complete.')
                 print(f'Estimated remaining training time (hour,min,sec): {calculate_eta(start_time, perc_complete)}')
-                torch.save(model.state_dict(), model_save_path)
             if batch_num >= num_train_batches:
                 break
             train_examples=train_examples+batch_size
@@ -274,6 +282,8 @@ def loss_handler(loss_fn_name, addl1_loss, T_CO_pred_new, T_CO_pred, T_CO_gt, me
     elif loss_fn_name == "add_l1_disentl_scaled":
         sc_disentl_loss = compute_scaled_disentl_ADD_L1_loss(T_CO_pred, T_CO_pred_new, T_CO_gt, mesh_verts)
         sc_disentl_loss.backward()
+    else:
+        assert False
 
 def train_iter_policy_constant(current_batch, num):
     return num

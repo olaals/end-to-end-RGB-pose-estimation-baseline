@@ -1,4 +1,6 @@
 import torch
+import scipy
+from scipy import ndimage, misc
 import numpy as np
 import trimesh as tm
 import random
@@ -39,13 +41,24 @@ def get_mesh_path_from_yaml(yaml_path):
         mesh_path = os.path.join("model3d-datasets", ds_name, mesh_class, train_or_test, mesh_filename)
     return mesh_path
 
+def get_gradient(img):
+    # img to gray
+    img = np.array(img)
+    img = np.mean(img, axis=2)
+    result = ndimage.gaussian_gradient_magnitude(img, sigma=1)
+    result = np.dstack((result, result, result))
+    # divide by max
+    result = result / np.max(result)
+    return result
 
 
 class ImagePoseDataset(Dataset):
     def __init__(self, train_val_or_test, ds_conf):
         dataset_path = os.path.join("img-datasets", ds_conf["img_dataset"])
-        classes = ds_conf["train_classes"]
+        classes = ds_conf["classes"]
+        self.train_val_or_test = train_val_or_test
         self.all_paths = get_ds_file_paths(dataset_path, classes, train_val_or_test )
+        self.all_paths.sort()
         self.ds_conf = ds_conf
         self.filename_real = ds_conf["img_ds_conf"]["real"]
         self.filename_init = ds_conf["img_ds_conf"]["init"]
@@ -53,26 +66,26 @@ class ImagePoseDataset(Dataset):
     def __len__(self):
         return len(self.all_paths)
 
-    def augment_handler(self, image):
-        transforms = A.Compose([
-            A.RGBShift(r_shift_limit=30, g_shift_limit=30, b_shift_limit=30, p=1.0),
-            A.RandomBrightnessContrast(brightness_limit=(-0.15, 0.35), contrast_limit=0.25, p=1.0),
-        ])
-        image = transforms(image=image)["image"]
-        return image
 
     def __getitem__(self, idx):
         real_path = os.path.join(self.all_paths[idx], self.filename_real)
         init_path = os.path.join(self.all_paths[idx], self.filename_init)
         verts = np.load(os.path.join(self.all_paths[idx], "vertices.npy"))
         T_CO_gt = np.load(os.path.join(self.all_paths[idx], "T_CO_gt.npy"))
+        T_CO_gt = T_CO_gt.astype(np.float32)
         T_CO_init = np.load(os.path.join(self.all_paths[idx], "T_CO_init.npy"))
         depth_pass = np.load(os.path.join(self.all_paths[idx], "init_depth.npy"))
         K = np.load(os.path.join(self.all_paths[idx], "K.npy"))
         real_img = np.asarray(Image.open(real_path).convert('RGB'))
-        #real_img = self.augment_handler(real_img) 
+        #real_img = get_gradient(real_img)
+        #if "augment" in self.ds_conf:
+            #real_img = self.ds_conf["augment"](image=real_img)["image"]
         real_img = real_img/255.0
-        init_img = np.asarray(Image.open(init_path))/255.0
+        init_img = np.asarray(Image.open(init_path))
+        #init_img = A.RandomBrightnessContrast()(image=init_img)["image"]
+
+        if np.max(init_img) > 0.0:
+            init_img = init_img/np.max(init_img)
         mesh_path = get_mesh_path_from_yaml(os.path.join(self.all_paths[idx], "metadata.yml"))
         return init_img, real_img, T_CO_init, T_CO_gt, verts, mesh_path, depth_pass, K
 
@@ -92,7 +105,7 @@ def get_dataloader(ds_conf, batch_size, train_test_or_val="train"):
         return train_loader
     elif(train_test_or_val == 'val'):
         val_ds = ImagePoseDataset("validation", ds_conf)
-        val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
+        val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=True)
         return val_loader
     elif(train_test_or_val == 'test'):
         test_ds = ImagePoseDataset("test", ds_conf)

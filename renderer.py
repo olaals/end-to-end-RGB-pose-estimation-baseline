@@ -11,6 +11,7 @@ from PIL import Image
 from se3_helpers import get_T_CO_init_and_gt
 from pyrender.constants import RenderFlags
 from spatialmath.base import trnorm
+import rhovee
 
 
 def get_camera_matrix(intrinsics):
@@ -49,6 +50,7 @@ def add_object(scene, path, pose=None, force_mesh=False):
 def add_light(scene, T_CO):
     assert T_CO.shape == (4,4)
     T_OC = np.linalg.inv(T_CO)
+    T_OC = rhovee.SE3.SVDO(T_OC)
     light = pyrender.SpotLight(color=np.ones(3), intensity=15.0,
                             innerConeAngle=np.pi/9.0,
                             outerConeAngle=np.pi/2.0)
@@ -66,6 +68,7 @@ def plot_SE3(T):
 def add_camera(scene, T_CO, K):
     assert T_CO.shape == (4,4)
     T_OC = np.linalg.inv(T_CO)
+    T_OC = rhovee.SE3.SVDO(T_OC)
     #plot_SE3(T_OC)
     fx,fy, ux,uy = K[0,0], K[1,1], K[0,2], K[1,2]
     camera = pyrender.IntrinsicsCamera(fx, fy, ux,uy)
@@ -97,6 +100,8 @@ def render_scene(object_path, T_CO, cam_config=None, K=None, img_size=None):
     add_light(scene, T_CO)
     add_camera(scene, T_CO, K)
     img, depth = render(scene, img_size)
+    if np.max(img) > 0.0:
+        img = img/np.max(img)
     return img, depth
 
 

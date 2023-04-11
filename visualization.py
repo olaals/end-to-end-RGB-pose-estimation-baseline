@@ -43,6 +43,10 @@ def save_img(img, resize_to, save_dir, filename):
 
 
 def create_interpolated_image_fig(init_imgs, gt_imgs, pred_imgs_sequence, gt_imgs_raster=None,  save_dir=None, show_fig=False, train_examples="", train_val_or_test =None):
+    print("init_imgs", type(init_imgs), init_imgs.shape)
+    print("gt imgs", type(gt_imgs), gt_imgs.shape)
+    print("pred_imgs_seq", type(pred_imgs_sequence), np.array(pred_imgs_sequence).shape)
+    print("gt_imgs_raster", type(gt_imgs_raster), gt_imgs_raster.shape)
     print("save_dir:", save_dir)
     BLEND_ALPHA = 0.4
     IMG_SIZE = (200,200)
@@ -51,7 +55,7 @@ def create_interpolated_image_fig(init_imgs, gt_imgs, pred_imgs_sequence, gt_img
 
     batch_size = len(init_imgs)
     iter_num = len(pred_imgs_sequence)
-    fig, ax = plt.subplots(batch_size, iter_num+2)
+    fig, ax = plt.subplots(batch_size, iter_num+2, squeeze=False)
     fig.set_size_inches(18.5, 10.5, forward=True)
     if(save_dir is not None):
         assert(train_val_or_test is not None)
@@ -86,7 +90,6 @@ def create_interpolated_image_fig(init_imgs, gt_imgs, pred_imgs_sequence, gt_img
         ax[i,1].set_title("Green: GT. Red: init")
         for j in range(iter_num):
             gt_img = gt_imgs[i]
-            init_img = init_imgs[i]
             pred_img = pred_imgs_sequence[j][i]
             blend_pred = blend_imgs(create_silhouette(pred_img), gt_img, BLEND_ALPHA)
             if save_figure:
@@ -100,6 +103,7 @@ def create_interpolated_image_fig(init_imgs, gt_imgs, pred_imgs_sequence, gt_img
     if(save_figure):
         print("Saving visualization:", save_path)
         plt.savefig(save_path,dpi=150, bbox_inches='tight')
+    plt.close()
 
 
 def combine_imgs(img1, img2):
@@ -134,6 +138,7 @@ def create_rgb_overlapped_image_fig(init_imgs, gt_imgs, pred_imgs_sequence, save
         plt.show()
     if save_fig:
         plt.savefig(save_path,dpi=300, bbox_inches='tight')
+    plt.close()
 
 def visualize_examples(model, config, train_val_or_test, show_fig=False, save_dir=None, n_train_examples=""):
 
@@ -150,8 +155,10 @@ def visualize_examples(model, config, train_val_or_test, show_fig=False, save_di
     rot_repr = config["network"]["rotation_representation"]
     use_norm_depth = config["advanced"]["use_normalized_depth"]
     use_par_render = config["scene_config"]["use_parallel_rendering"]
-    if(train_val_or_test == 'train' or train_val_or_test=='val'):
+    if train_val_or_test == 'train':
         ds_conf = config["dataset_config"]
+    elif train_val_or_test=='val':
+        ds_conf = config["val_dataset_config"]
     elif(train_val_or_test=='test'):
         ds_conf = config["test_dataset_config"]
 
@@ -159,7 +166,6 @@ def visualize_examples(model, config, train_val_or_test, show_fig=False, save_di
     model.eval()
     #model = model.to(device)
 
-    train_from_imgs = config["dataset_config"]["train_from_images"]
 
     data_loader = get_dataloader(ds_conf, batch_size, train_val_or_test)
     init_imgs, gt_imgs, T_CO_init, T_CO_gt, mesh_verts, mesh_paths, depths, cam_mats = next(iter(data_loader))

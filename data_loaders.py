@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import trimesh as tm
+import albumentations as A
 import random
 import os
 import albumentations as A
@@ -66,11 +67,19 @@ def sample_T_CO_inits_and_gts(batch_size, scene_config):
     return T_CO_inits, T_CO_gts
 
 def normalize_depth(depth_img):
+    if np.max(depth_img) <= 0.1:
+        return depth_img
     mean_val = np.mean(depth_img[depth_img>0.01])
     std = np.std(depth_img[depth_img>0.01])
+    if np.isclose(std, 0.0):
+        return depth_img
     normalized = np.where(depth_img>0.01, (depth_img-mean_val)/std, 0.0)
     return normalized.astype(np.float32)
 
+def normalize_img(img):
+    std = np.std(img)
+    mean = np.mean(img)
+    return (img-mean)/std
 
 def render_batch(T_COs, mesh_paths, Ks, img_size, parallel_render=False):
 
@@ -100,6 +109,8 @@ def render_batch_sequential(T_COs, mesh_paths, Ks, img_size):
         T_CO = T_COs[i]
         K = Ks[i]
         img, norm_depth = render_scene(mesh_path, T_CO, K=K, img_size=img_size)
+        if np.max(img)>0:
+            img = img/np.max(img)
         imgs.append(img.astype(np.float32))
         norm_depths.append(norm_depth.astype(np.float32))
     imgs = np.array(imgs, dtype=np.float32)
@@ -142,11 +153,16 @@ def sample_verts_to_batch(mesh_paths, num_verts_to_sample):
     verts_batch = torch.stack(verts_batch)
     return verts_batch
 
+
+
 def prepare_model_input(init_imgs, gt_imgs, depths, use_norm_depth=False):
     model_input_batch = []
     for i in range(len(init_imgs)):
         init_img = init_imgs[i]
+        #init_img = A.RandomBrightnessContrast()(image=init_img)["image"]
         gt_img = gt_imgs[i]
+        gt_img = normalize_img(gt_img)
+        #init_img = normalize_img(init_img)
         gt_tensor = transforms(image=gt_img.astype(np.float32))["image"]
         init_tensor = transforms(image=init_img.astype(np.float32))["image"]
         if not use_norm_depth:
