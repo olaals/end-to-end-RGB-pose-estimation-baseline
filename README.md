@@ -28,10 +28,10 @@ Snippets of code are copied from the CosyPose github. Copied functions contains 
 
 ## 2. Image dataset
 1. Create an image dataset from https://github.com/olaals/datasets-rgb-pose-estimation 
-2. Create a symbolic link or copy the dataset to ![Alt text](img-datasets)
+2. Create a symbolic link or copy the dataset to ![img-datasets](img-datasets)
 
 ## 3. 3D dataset
-1. Create a symbolic link or copy the same 3D model dataset used to create the image dataset to ![Alt text](model3d-datasets)
+1. Create a symbolic link or copy the same 3D model dataset used to create the image dataset to ![model3d-datasets](model3d-datasets)
 
 
 
