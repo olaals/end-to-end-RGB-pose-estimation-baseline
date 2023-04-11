@@ -1,6 +1,6 @@
 # A baseline for end-to-end RGB render-and-compare pose estimation
 
-![Alt text](docs/example-inference.png "Training inference process")
+![Alt text](docs/example.png "Training inference process")
 
 
 
@@ -21,10 +21,18 @@ https://github.com/ylabbe/cosypose
 
 Snippets of code are copied from the CosyPose github. Copied functions contains an explicit comment about the source.
 
-# Getting started
+# Pre-requisites
 ## 1: Install dependencies
 1. Install torch and cuda from https://pytorch.org/get-started/locally/
 2. ```pip install -r requirements.txt```
+
+## 2. Image dataset
+1. Create an image dataset from https://github.com/olaals/datasets-rgb-pose-estimation 
+2. Create a symbolic link or copy the dataset to ![Alt text](img-datasets)
+
+## 3. 3D dataset
+1. Create a symbolic link or copy the same 3D model dataset used to create the image dataset to ![Alt text](model3d-datasets)
+
 
 
 # Technical details
