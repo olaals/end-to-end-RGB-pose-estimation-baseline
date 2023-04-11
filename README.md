@@ -2,13 +2,11 @@
 
 ![Alt text](docs/example.png "Training inference process")
 
-
-
-A baseline for render-and-compare machine learning pose estimation using a known CAD model, without the use of depth measurements.
+A repository for render-and-compare machine learning pose estimation using a known CAD model, without the use of depth measurements. A neural network compares a real image and an object rendered under an initial pose estimate. The neural network iteravely predicts pose updates to the model until the rendering of the object matches the real image.
 
 
 \
-Links to DeepIM and CosyPose:
+Based on the work from DeepIM and CosyPose:
 
 **DeepIM**:
 https://arxiv.org/abs/1804.00175
